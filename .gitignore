@@ -1,0 +1,23 @@
+# ==========================================
+# Global .gitignore for KorpoChat
+# ==========================================
+
+# Ignore IDE configuration folders
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Ignore OS generated files
+.DS_Store
+Thumbs.db
+
+# Ignore compiled Java files and Maven/Gradle 
+backend/target/
+backend/build/
+*.class
+*.jar
+*.war
+
+# Ignore sensitive environment variables
+.env
