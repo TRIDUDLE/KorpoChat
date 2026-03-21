@@ -1,57 +1,219 @@
 // frontend/js/app.js
+import { api } from './api.js';
 
-// Wait for the DOM to be fully loaded before attaching events
 document.addEventListener('DOMContentLoaded', () => {
 
-    //DOM elements views
-
+    // DOM elements views
     const authView = document.getElementById('auth-view');
     const appView = document.getElementById('app-view');
     const adminView = document.getElementById('admin-view');
+    const addUserForm = document.getElementById('add-user-form');
+    //DOM chat elements
+    const ChatForm = document.getElementById('chat-form');
+    const messageInput = document.getElementById('message-input');
+    const ChatMessages = document.getElementById('chat-messages');
+
+    //MOCK current user is jsut a guest for TEST!
+    let currentUser ='guest'
+    //keep track of wwho is logged and what are their permisions
+    let currentUserRole = 'GUEST'; // default role
     
+    // DOM elements buttons & forms
     const loginForm = document.getElementById('login-form');
     const logoutBtn = document.getElementById('logout-btn');
     const goToAdminBtn = document.getElementById('go-to-admin-btn');
     const backToChatBtn = document.getElementById('back-to-chat-btn');
     const adminControls = document.getElementById('admin-controls');
-    const addUserForm = document.getElementById('add-user-form');
+
 
     // Handle Login 
-    loginForm.addEventListener('submit', (e) => {
+    loginForm.addEventListener('submit', async (e) => {
         e.preventDefault(); 
+        
+        const usernameInput = document.getElementById('login-username').value;
+        const passwordInput = document.getElementById('login-password').value;
 
-        const mockUserRole = 'ADMIN'; // MOCK: Replace with real role from auth response
+        try {
+            // Call API login and get auth data (token + role)
+            const authData = await api.login(usernameInput, passwordInput);
 
-        if (mockUserRole === 'ADMIN') {
-            adminControls.classList.remove('hidden');
-        } else {
-            //Ensure the container remains hidden for standard users
-            adminControls.classList.add('hidden');
+            currentUser = usernameInput; // Set current user (for chat purposes)
+            currentUserRole = authData.role; // Set current user role
+            
+            // role-based UI control
+            if (authData.role === 'ADMIN') {
+                adminControls.classList.remove('hidden');
+            } else {
+                adminControls.classList.add('hidden');
+            }
+
+            // main app view
+            authView.classList.add('hidden');
+            appView.classList.remove('hidden');
+
+            await loadChatHistory(); // Load chat messages after login
+            ChatMessages.scrollTop = ChatMessages.scrollHeight;
+
+        } catch (error) {
+            alert("Error logging in!");
+            console.error("Login error:", error);
         }
-
-        // Hide auth view, show app view
-        authView.classList.add('hidden');
-        appView.classList.remove('hidden');
     });
-    goToAdminBtn.addEventListener('click', () => {
-        // Hide app view, show admin view
+    //chat form logic
+    if (ChatForm) {
+        ChatForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Prevent page reload
+            
+            // trimming white spaces from message
+            const text = messageInput.value.trim(); 
+
+            // Prevent sending empty messages
+            if (text.length > 0) {
+                try {
+                    // Send message Via API api.js
+                    const savedMessage = await api.sendMessage(currentUser, text);
+                    
+                    // show the new message
+                    renderSingleMessage(savedMessage);
+                    
+                    // Clear the input field
+                    messageInput.value = '';
+                    
+                    // autoscrolling to the bottom
+                    ChatMessages.scrollTop = ChatMessages.scrollHeight;
+                } catch (error) {
+                    console.error("Failed to send message:", error);
+                }
+            }
+        });
+    }
+    if (addUserForm) {
+        addUserForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newUsernameInput = document.getElementById('new-username').value;
+            const newPasswordInput = document.getElementById('new-password').value;
+            const newRoleInput = document.getElementById('new-role').value;
+
+            try{
+                //pass data to API
+                await api.addUser(newUsernameInput,newPasswordInput, newRoleInput);
+
+                //clearing fields
+                addUserForm.reset();
+
+                await renderAdminTable();
+
+                console.log(`Added user: ${newUsernameInput} with role ${newRoleInput}`);
+            }catch(error){
+                console.error("ERROR when adding user:", error);
+            }
+        });
+    }
+
+    // Handle navigation to Admin Panel + data loading
+    goToAdminBtn.addEventListener('click', async () => {
+        
+        //security check - only admins can access
+        if(currentUserRole !== 'ADMIN'){
+            alert("Access denied! no snooping! Admins only.");
+            console.warn("No access! bad try dirty hacker");
+            return; //halt
+        }
+        
         appView.classList.add('hidden');
         adminView.classList.remove('hidden');
+
+        // user data loading
+        await renderAdminTable();
     });
+
     backToChatBtn.addEventListener('click', () => {
-        // Hide admin view, show app view
         adminView.classList.add('hidden');
         appView.classList.remove('hidden');
     });
 
-    // 4. Handle Logout
+
+    // Handle Logout
     logoutBtn.addEventListener('click', () => {
-        // Hide app view, show auth view
         appView.classList.add('hidden');
         authView.classList.remove('hidden');
         adminView.classList.add('hidden');
-        
-        // Clear the form inputs
         loginForm.reset();
     });
+
+    // --- helper functions ---
+
+    async function renderAdminTable() {
+        const tableBody = document.getElementById('user-table-body');
+        if (!tableBody) return;
+
+        // data loading state
+        tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Ładowanie danych...</td></tr>`;
+
+        try {
+            // take data from API 
+            const users = await api.getUsers();
+            
+            // clear old data
+            tableBody.innerHTML = '';
+
+            // Wygeneruj wiersze
+            users.forEach(user => {
+                const dotColor = user.status === 'ONLINE' ? 'green' : 'gray';
+                
+                tableBody.innerHTML += `
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 10px;">${user.username}</td>
+                        <td style="padding: 10px;"><strong>${user.role}</strong></td>
+                        <td style="padding: 10px;">
+                            <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background-color:${dotColor}; margin-right:5px;"></span>
+                            ${user.status}
+                        </td>
+                        <td style="padding: 10px;">${user.last_seen}</td>
+                        <td style="padding: 10px;"><button class="btn-small">Edytuj</button></td>
+                        <td style="padding: 10px;"><button class="btn-small">Usuń</button></td>
+                    </tr>
+                `;
+            });
+        } catch (error) {
+            tableBody.innerHTML = `<tr><td colspan="5" style="color: red; text-align: center;">Error loading data</td></tr>`;
+        }
+    }
+    async function loadChatHistory() {
+        if (!ChatMessages) return;
+        
+        // Clear current HTML
+        ChatMessages.innerHTML = ''; 
+        
+        try {
+            const messages = await api.getMessages();
+            // Render each message from storage
+            messages.forEach(msg => renderSingleMessage(msg));
+            
+            // Auto-scroll to the newest message
+            messages.scrollTop = messages.scrollHeight;
+        } catch (error) {
+            console.error("Error loading chat history:", error);
+            ChatMessages.innerHTML = '<p style="color:red;">Error loading messages.</p>';
+        }
+    }
+    function renderSingleMessage(msg) {
+        if (!ChatMessages) return;
+
+        // Extract hour and minute from the ISO string
+        const dateObj = new Date(msg.timestamp);
+        const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // Build HTML structure for the message
+        const messageHtml = `
+            <div class="message" style="margin-bottom: 10px; padding: 10px; background: #f1f1f1; border-radius: 5px;">
+                <strong style="color: #3b82f6;">${msg.sender}</strong> 
+                <span style="font-size: 0.8rem; color: #888; margin-left: 10px;">${timeString}</span>
+                <p style="margin-top: 5px; word-wrap: break-word;">${msg.text}</p>
+            </div>
+        `;
+
+        // Inject into the DOM
+        ChatMessages.innerHTML += messageHtml;
+    }
 });

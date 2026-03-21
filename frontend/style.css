@@ -1,9 +1,12 @@
 /* =========================================
    Utility Classes & Global Reset
    ========================================= */
-* { margin: 0; padding: 0; box-sizing: border-box; }
+/* * { margin: 0; padding: 0; box-sizing: border-box; } */
 
 body {
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f8f9fa;
     color: #333;
@@ -76,10 +79,8 @@ body {
    Main Chat Application (Grid Layout)
    ========================================= */
 .app-container {
-    display: grid;
-    grid-template-columns: 260px 1fr;
+    display: flex;
     height: 100vh;
-    overflow: hidden;
 }
 
 .sidebar {
@@ -113,6 +114,7 @@ body {
 .chat-area {
     display: flex;
     flex-direction: column;
+    flex-grow: 1;
     height: 100%;
 }
 
@@ -123,18 +125,20 @@ body {
 }
 
 .chat-messages {
-    flex: 1;
+    flex-grow: 1;
+    overflow-y: auto; /* add scrollbar if too many msgs */
     padding: 20px;
-    overflow-y: auto;
     background-color: #f8f9fa;
+    flex-direction: column;
 }
 
 .chat-input-wrapper {
-    padding: 20px;
+    flex-shrink: 0;
+    padding: 15px;
     background-color: #fff;
     border-top: 1px solid #dee2e6;
     display: flex;
-    gap: 10px;
+    flex-grow: 1;
 }
 
 #message-input {
@@ -142,6 +146,8 @@ body {
     padding: 12px;
     border: 1px solid #ced4da;
     border-radius: 4px;
+    flex-grow: 1; /* take all horizontal space */
+    
 }
 
 .chat-input-wrapper button {
