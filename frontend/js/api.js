@@ -114,6 +114,7 @@
                 }
 
                 return await response.json();
+
             } catch (error) {
                 console.error("server connection error when sending message:", error);
                 throw error;
