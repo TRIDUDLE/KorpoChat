@@ -57,55 +57,66 @@
         
         },
         addUser: async (username,password,role) => {
-            const users = await api.getUsers();
-            const newUser = {
-                id: users.length + 1, // Mock ID generation
-                username: username,
-                password: password, //plaintext for mock frontend
-                role: role,
-                status: 'OFFLINE', //default status for new users
-                last_seen: 'N/A'
-            };
-            users.push(newUser);
-            localStorage.setItem('users', JSON.stringify(users)); // Mock persistence
+            try{
+                const response = await fetch(`${api.BASE_URL}/users`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json';
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        role: role
+                    })
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to add user!');
+                }
+                return await response.json();
 
-            return newUser;
+            } catch (error) {
+                console.error("server connection error when adding user:", error);
+                throw error;
+            }
         },
         getMessages: async () => {
-            //MOCK
-            const storedMessages= localStorage.getItem('chat_messages');
-            if (storedMessages){
-                return JSON.parse(storedMessages);
-            }else{
-                //default messge if emty
-                const defaultMessages=[
-                    {
-                    id: Date.now(),
-                    sender: 'system',
-                    text: 'to jest wiadomosc testowa',
-                    timestamp: new Date().toISOString()
+            try {
+                const response = await fetch(`${api.BASE_URL}/messages`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
                     }
-                ];
-                localStorage.setItem('chat_messages', JSON.stringify(defaultMessages));
-                return defaultMessages;
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch chat history from server!');
+                }
+            } catch(error){
+                console.error("server connection error:", error);
+                throw(error);
             }
         },
         sendMessage: async (sender, text) => {
-            // Retrieve existing messages
-            const messages = await api.getMessages();
-            
-            // Create new message object
-            const newMessage = {
-                id: Date.now(), // MOCK ID
-                sender: sender,
-                text: text,
-                timestamp: new Date().toISOString()
-            };
-            
-            // Append and save to storage
-            messages.push(newMessage);
-            localStorage.setItem('chat_messages', JSON.stringify(messages));
-            
-            return newMessage;
+            try {
+                const response = await fetch(`${api.BASE_URL}/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sender: sender,
+                        text: text
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to send message!');
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error("server connection error when sending message:", error);
+                throw error;
+            }
         }
     };
