@@ -4,5 +4,7 @@ Content-Type: application/json
 
 {
   "username": "admin",
-  "password": "admin123"
+  "password": "admin"
 }
+### Fetch all users
+GET http://localhost:8080/api/users
