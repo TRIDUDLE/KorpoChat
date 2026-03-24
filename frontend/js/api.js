@@ -91,6 +91,7 @@
                 if (!response.ok) {
                     throw new Error('Failed to fetch chat history from server!');
                 }
+                return await response.json();
             } catch(error){
                 console.error("server connection error:", error);
                 throw(error);
