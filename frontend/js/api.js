@@ -35,19 +35,25 @@
         },
 
         getUsers: async () => {
-            //MOCK
-            const storedUsers = localStorage.getItem('users'); 
-            if (storedUsers) {
-                return JSON.parse(storedUsers);
-            }else {
-                const defaultUsers = [
-                    { id: 1, username: 'admin',password:'admin', role: 'ADMIN', status: 'ONLINE', last_seen: 'Teraz' },
-                    { id: 2, username: 'bartosz',password:'elza', role: 'USER', status: 'OFFLINE', last_seen: '15 min temu' },
-                    { id: 3, username: 'marcel',password:'luna', role: 'USER', status: 'ONLINE', last_seen: 'Teraz' },
-                ];
-                localStorage.setItem('users', JSON.stringify(defaultUsers));
-                return defaultUsers;
-            }    
+            try{
+                const response = await fetch(`${api.BASE_URL}/users`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch users from server!');
+                }
+
+                const data = await response.json();
+                return data; 
+            }
+            catch(error){
+                console.error("server connection error:", error);
+                throw error; 
+            }
         
         },
         addUser: async (username,password,role) => {
