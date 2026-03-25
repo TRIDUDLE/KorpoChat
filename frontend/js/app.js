@@ -36,9 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const ChatMessages = document.getElementById('chat-messages');
 
     //MOCK current user is jsut a guest for TEST!
-    let currentUser ='guest'
+    let currentUser = null;
     //keep track of wwho is logged and what are their permisions
-    let currentUserRole = 'GUEST'; // default role
+    let currentUserRole = null;
 
     // API calls
     let currentMessageCount = 0; 
@@ -172,12 +172,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle Logout
     logoutBtn.addEventListener('click', async () => {
-        if(currentUser !== 'guest'){
+        if(currentUser){
             await api.logout(currentUser); // Inform server about logout
         }
 
-        currentUser = 'guest'; // Reset to guest
-        currentUserRole = 'GUEST'; // Reset role
+        //reset all user-related data and states
+        currentUser = null; 
+        currentUserRole = null; 
         currentMessageCount = 0; // RESET MESSAGE COUNTER
         stopChatPolling();       // stop polling for new messages when logged out
 
