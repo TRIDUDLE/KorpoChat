@@ -46,6 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const goToAdminBtn = document.getElementById('go-to-admin-btn');
     const backToChatBtn = document.getElementById('back-to-chat-btn');
     const adminControls = document.getElementById('admin-controls');
+    // DOM elements for sidebar toggle
+    const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+    const sidebarElement = document.querySelector('.sidebar');
 
 
     // Handle Login 
@@ -175,6 +178,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.title = "KorpoChat - Logowanie";
     });
 
+    // Handle Sidebar Toggle (Hamburger Menu)
+    if (sidebarToggleBtn && sidebarElement) {
+        sidebarToggleBtn.addEventListener('click', () => {
+            // Toggle the 'closed' class to hide/show the sidebar globally
+            sidebarElement.classList.toggle('closed');
+        });
+    }
+    
     // --- render functions ---
     async function renderAdminTable() {
         const tableBody = document.getElementById('user-table-body');

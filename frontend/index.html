@@ -28,7 +28,7 @@
     <div id="app-view" class="app-container hidden">
         <aside class="sidebar">
             <div class="sidebar-header">
-                <h2>KorpoChat</h2>
+                <h2>KorpoChat</h2> 
                 <button id="logout-btn" class="btn-small">Wyloguj</button>
             </div>
             
@@ -42,7 +42,10 @@
         </aside>
         <!-- chat area - main content/ -->
         <main class="chat-area">
-            <header class="chat-header"><h3 id="current-channel-name">#główny</h3></header>
+            <header class="chat-header">
+                <button id="sidebar-toggle-btn" class="hamburger-btn" aria-label="Toggle Menu">☰</button>
+                <h3 id="current-channel-name">#główny</h3>
+            </header>
             <div class="chat-messages" id="chat-messages">
                 <div class="message"> wersja MVP!</div>
             </div>
