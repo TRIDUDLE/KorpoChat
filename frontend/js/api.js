@@ -2,7 +2,7 @@
 
     export const api = {
         // Base URL for API requests (relative to the frontend server because nginx will proxy /api to the backend)
-        BASE_URL: 'http://localhost/api',
+        BASE_URL: '/api',
 
         login: async (username, password) => {
             try {
@@ -120,6 +120,22 @@
             } catch (error) {
                 console.error("server connection error when sending message:", error);
                 throw error;
+            }
+        },
+        // handle logout
+        logout: async (username) => {
+            try{
+                const response = await fetch(`${api.BASE_URL}/auth/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username: username })
+                });
+                if (!response.ok) {
+                    console.warn('Logout request failed, but proceeding with client-side logout.');
+                }
+            }catch(error){
+                console.error("server connection error when logging out:", error);
             }
         }
     };

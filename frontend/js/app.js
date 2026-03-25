@@ -1,6 +1,28 @@
 // frontend/js/app.js
 import { api } from './api.js';
 
+// Helper function to format "last seen" time in a human-readable way
+const formatTimeAgo = (dateString) => {
+        if(!dateString || dateString === 'null') return 'N/A';
+
+        const date = new Date(dateString);
+        const now = new Date();
+
+        const diffInSeconds = Math.floor((now - date) / 1000);
+        if(diffInSeconds < 60) return `${diffInSeconds} sekund temu`;
+
+        const diffInMinutes = Math.floor(diffInSeconds / 60);
+        if(diffInMinutes < 60) return `${diffInMinutes} minut temu`;
+
+        const diffInHours = Math.floor(diffInMinutes / 60);
+        if(diffInHours < 24) return `${diffInHours} godzin temu`;
+
+        const diffInDays = Math.floor(diffInHours / 24);
+        if(diffInDays == 1) return `wczoraj`;
+
+        return `${diffInDays} dni temu`;
+    }
+
 document.addEventListener('DOMContentLoaded', () => {
 
     // DOM elements views
@@ -51,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
             authView.classList.add('hidden');
             appView.classList.remove('hidden');
 
+            document.title = "KorpoChat";
             await loadChatHistory(); // Load chat messages after login
             ChatMessages.scrollTop = ChatMessages.scrollHeight;
 
@@ -123,6 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
         appView.classList.add('hidden');
         adminView.classList.remove('hidden');
 
+        document.title = "KorpoChat - Admin Panel";
         // user data loading
         await renderAdminTable();
     });
@@ -130,40 +154,28 @@ document.addEventListener('DOMContentLoaded', () => {
     backToChatBtn.addEventListener('click', () => {
         adminView.classList.add('hidden');
         appView.classList.remove('hidden');
+        document.title = "KorpoChat";
     });
 
 
     // Handle Logout
-    logoutBtn.addEventListener('click', () => {
+    logoutBtn.addEventListener('click', async () => {
+        if(currentUser !== 'guest'){
+            await api.logout(currentUser); // Inform server about logout
+        }
+
+        currentUser = 'guest'; // Reset to guest
+        currentUserRole = 'GUEST'; // Reset role
+
+        // Show login view, hide others
         appView.classList.add('hidden');
         authView.classList.remove('hidden');
         adminView.classList.add('hidden');
         loginForm.reset();
+        document.title = "KorpoChat - Logowanie";
     });
 
-    // --- helper functions ---
-    const formatTimeAgo = (dateString) => {
-        if(!dateString || dateString === 'null') return 'N/A';
-
-        const date = new Date(dateString);
-        const now = new Date();
-
-        const diffInSeconds = Math.floor((now - date) / 1000);
-        if(diffInSeconds < 60) return `${diffInSeconds} sekund temu`;
-
-        const diffInMinutes = Math.floor(diffInSeconds / 60);
-        if(diffInMinutes < 60) return `${diffInMinutes} minut temu`;
-
-        const diffInHours = Math.floor(diffInMinutes / 60);
-        if(diffInHours < 24) return `${diffInHours} godzin temu`;
-
-        const diffInDays = Math.floor(diffInHours / 24);
-        if(diffInDays == 1) return `wczoraj`;
-
-        return `${diffInDays} dni temu`;
-    }
-        
-
+    // --- render functions ---
     async function renderAdminTable() {
         const tableBody = document.getElementById('user-table-body');
         if (!tableBody) return;
