@@ -2,14 +2,11 @@
 -- then *docker compose up* to recreate it with the new schema.
 -- !IMPORTANT! This will delete all existing data in the database, so make sure to back up any important data before doing this.
 
-
 -- 1. USERS TABLE
 -- roles will be stored as simple string ('USER', 'ADMIN') maybe extended later if needed
 -- IMPORTANT To use string not int in java code, we need to add @Enumerated(EnumType.STRING) to the role field in User entity class.
-
 -- status will be stored as string ('ONLINE', 'OFFLINE') 
-
---UUID is used as primary key (randomly generated ID)
+-- UUID is used as primary key (randomly generated ID)
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username VARCHAR(50) UNIQUE NOT NULL,
@@ -38,15 +35,21 @@ CREATE TABLE channel_members (
     PRIMARY KEY (channel_id, user_id)
 );
 
-
+-- 4. MESSAGES TABLE
+-- WARNING: Technical debt introduced here for MVP. 
+-- 'sender' is a string instead of a foreign key, breaking relational integrity.
+-- 'channel_id' made nullable because frontend doesn't send it yet.
 -- 4. MESSAGES TABLE
 CREATE TABLE messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    channel_id UUID NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
-    sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    content TEXT NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    channel_id UUID REFERENCES channels(id) ON DELETE CASCADE, 
+    sender VARCHAR(50) NOT NULL, 
+    text TEXT NOT NULL,          
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 5. INITIAL DATA SEEDING
 INSERT INTO users (id, username, password_hash, role, status, last_seen) 
 VALUES 
 (gen_random_uuid(), 'admin', 'admin', 'ADMIN', 'OFFLINE', NOW()),
+(gen_random_uuid(), 'user', 'user', 'USER', 'ONLINE', NOW());

@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background-color:${dotColor}; margin-right:5px;"></span>
                             ${user.status}
                         </td>
-                        <td style="padding: 10px;">${user.last_seen}</td>
+                        <td style="padding: 10px;">${user.lastSeen}</td>
                         <td style="padding: 10px;"><button class="btn-small">Edytuj</button></td>
                         <td style="padding: 10px;"><button class="btn-small">Usuń</button></td>
                     </tr>

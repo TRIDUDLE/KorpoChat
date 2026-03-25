@@ -1,7 +1,8 @@
     // frontend/js/api.js
 
     export const api = {
-        BASE_URL: 'http://localhost:8080/api',
+        // Base URL for API requests (relative to the frontend server because nginx will proxy /api to the backend)
+        BASE_URL: 'http://localhost/api',
 
         login: async (username, password) => {
             try {
