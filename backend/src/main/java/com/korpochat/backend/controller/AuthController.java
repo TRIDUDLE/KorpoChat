@@ -2,6 +2,7 @@ package com.korpochat.backend.controller;
 
 import com.korpochat.backend.dto.AuthResponse;
 import com.korpochat.backend.dto.LoginRequest;
+import com.korpochat.backend.dto.LogoutRequest;
 import com.korpochat.backend.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,5 +31,13 @@ public class AuthController {
         } catch (RuntimeException e) {
             return ResponseEntity.status(401).body(e.getMessage());
         }
+    }
+    /**
+     * Endpoint for user logout.
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestBody LogoutRequest request) {
+        authService.logout(request);
+        return ResponseEntity.ok().build();
     }
 }
