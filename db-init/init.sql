@@ -47,3 +47,6 @@ CREATE TABLE messages (
     content TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+INSERT INTO users (id, username, password_hash, role, status, last_seen) 
+VALUES 
+(gen_random_uuid(), 'admin', 'admin', 'ADMIN', 'OFFLINE', NOW()),
