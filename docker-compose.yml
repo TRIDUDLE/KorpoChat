@@ -7,20 +7,15 @@ services:
     container_name: korpochat_db
     restart: unless-stopped
     environment:
-    #environment variables for postgres, using .env file values with defaults 
-    #(IMPORTANT! - u only have .env.example - read comments there)
       POSTGRES_USER: ${DB_USER-admin}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME-korpochat}
     ports:
-      # Mapping host port 5432 to container port 5432
       - "5432:5432"
     networks:
       - backend_net
     volumes:
-      # This ensures database data survives container restarts
       - postgres_data:/var/lib/postgresql/data
-      # This auto-executes our SQL script to create tables on first run
       - ./db-init/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
@@ -30,38 +25,32 @@ services:
 
   # ==========================================
   # 2. Backend Service (Java Spring Boot)
-  # uncomment and configure if you want to build the backend container from a Dockerfile
   # ==========================================
-  #
   backend:
-      # container built from Dockerfile in /backend folder, not using pre-built image
-      build: ./backend
-      container_name: korpochat_backend
-      restart: on-failure
-      depends_on:
-        db:
-          condition: service_healthy
-      ports:
-        - "8080:8080"
-      networks:
-        - backend_net
-        - frontend_net
-      environment:
-        # Injecting database credentials into Spring Boot
-        SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME-korpochat}
-        SPRING_DATASOURCE_USERNAME: ${DB_USER-admin}
-        SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-        # Ensuring Hibernate only validates our manual SQL schema
-        SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+    build: ./backend
+    container_name: korpochat_backend
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    networks:
+      - backend_net
+      - frontend_net
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME-korpochat}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER-admin}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
 
   # ==========================================
-  # 3. Frontend Service (Vanilla JS / Nginx )
+  # 3. Frontend Service (Vanilla JS / Nginx)
   # ==========================================
   frontend:
     image: nginx:alpine
     container_name: korpochat_frontend
     ports:
-      # Mapping host port 80 to container port 80
       - "80:80"
     volumes:
       - ./frontend:/usr/share/nginx/html:ro
@@ -69,14 +58,12 @@ services:
     networks:
       - frontend_net
     restart: unless-stopped
-    
+
 networks:
-# Define two separate networks for backend and frontend services
   backend_net:
     driver: bridge
   frontend_net:
     driver: bridge
 
-# Define the named volume for persistent database storage
 volumes:
   postgres_data:

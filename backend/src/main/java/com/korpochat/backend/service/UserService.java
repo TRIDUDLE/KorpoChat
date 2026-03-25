@@ -35,4 +35,24 @@ public class UserService {
                 ))
                 .collect(Collectors.toList());
     }
+    /**
+     * Creates a new user in the database.
+     */
+    public UserResponse addUser(com.korpochat.backend.dto.UserRequest request) {
+        com.korpochat.backend.entity.User user = new com.korpochat.backend.entity.User();
+        user.setUsername(request.getUsername());
+        user.setPasswordHash(request.getPassword()); //add password hashing later
+        user.setRole(com.korpochat.backend.entity.Role.valueOf(request.getRole().toUpperCase()));
+        user.setStatus(com.korpochat.backend.entity.Status.OFFLINE);
+
+        user = userRepository.save(user);
+
+        return new UserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getRole().name(),
+                user.getStatus().name(),
+                user.getLastSeen()
+        );
+    }
 }

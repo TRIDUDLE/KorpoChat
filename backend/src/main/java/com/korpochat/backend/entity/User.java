@@ -36,14 +36,6 @@ public class User {
     @Column(name = "created_at", insertable = false, updatable = false)
     private ZonedDateTime createdAt;
 
-    public enum Role {
-        USER, ADMIN
-    }
-
-    public enum Status {
-        ONLINE, OFFLINE
-    }
-
     public UUID getId() {
         return id;
     }
