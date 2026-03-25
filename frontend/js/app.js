@@ -39,6 +39,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentUser ='guest'
     //keep track of wwho is logged and what are their permisions
     let currentUserRole = 'GUEST'; // default role
+
+    // API calls
+    let currentMessageCount = 0; 
+    let pollingInterval = null;
     
     // DOM elements buttons & forms
     const loginForm = document.getElementById('login-form');
@@ -77,8 +81,12 @@ document.addEventListener('DOMContentLoaded', () => {
             appView.classList.remove('hidden');
 
             document.title = "KorpoChat";
-            await loadChatHistory(); // Load chat messages after login
-            ChatMessages.scrollTop = ChatMessages.scrollHeight;
+            await loadChatHistory(); 
+
+            //JAVASCRIPT POLLING - start polling for new messages after successful login
+            startChatPolling();
+            
+            
 
         } catch (error) {
             alert("Error logging in!");
@@ -101,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     // show the new message
                     renderSingleMessage(savedMessage);
+                    currentMessageCount++;
                     
                     // Clear the input field
                     messageInput.value = '';
@@ -169,6 +178,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         currentUser = 'guest'; // Reset to guest
         currentUserRole = 'GUEST'; // Reset role
+        currentMessageCount = 0; // RESET MESSAGE COUNTER
+        stopChatPolling();       // stop polling for new messages when logged out
 
         // Show login view, hide others
         appView.classList.add('hidden');
@@ -233,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const messages = await api.getMessages();
             // Render each message from storage
             messages.forEach(msg => renderSingleMessage(msg));
-            
+            currentMessageCount = messages.length; // set counter to current messages            
             // Auto-scroll to the newest message
             messages.scrollTop = messages.scrollHeight;
         } catch (error) {
@@ -259,5 +270,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Inject into the DOM
         ChatMessages.innerHTML += messageHtml;
+    }
+    // silent polling function to check for new messages every 1 second
+    async function startChatPolling() {
+        // If there's already a polling interval running, clear it before starting a new one
+        if (pollingInterval) clearInterval(pollingInterval);
+
+        pollingInterval = setInterval(async () => {
+            try {
+                const messages = await api.getMessages();
+                
+                // check if there are new messages by comparing the count of messages we have with the count from the server
+                if (messages.length > currentMessageCount) {
+                    
+                    // take only new messages that we haven't rendered yet
+                    const newMessages = messages.slice(currentMessageCount);
+                    
+                    // Render only new messages
+                    newMessages.forEach(msg => renderSingleMessage(msg));
+                    
+                    // update counter
+                    currentMessageCount = messages.length;
+                    
+                    // scroll to bottom
+                    ChatMessages.scrollTop = ChatMessages.scrollHeight;
+                }
+            } catch (error) {
+                console.error("Polling error (cichy błąd):", error);
+            }
+        }, 1000); // poll every 1 second
+    }
+
+    function stopChatPolling() {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
+        }
     }
 });
