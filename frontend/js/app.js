@@ -142,6 +142,27 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- helper functions ---
+    const formatTimeAgo = (dateString) => {
+        if(!dateString || dateString === 'null') return 'N/A';
+
+        const date = new Date(dateString);
+        const now = new Date();
+
+        const diffInSeconds = Math.floor((now - date) / 1000);
+        if(diffInSeconds < 60) return `${diffInSeconds} sekund temu`;
+
+        const diffInMinutes = Math.floor(diffInSeconds / 60);
+        if(diffInMinutes < 60) return `${diffInMinutes} minut temu`;
+
+        const diffInHours = Math.floor(diffInMinutes / 60);
+        if(diffInHours < 24) return `${diffInHours} godzin temu`;
+
+        const diffInDays = Math.floor(diffInHours / 24);
+        if(diffInDays == 1) return `wczoraj`;
+
+        return `${diffInDays} dni temu`;
+    }
+        
 
     async function renderAdminTable() {
         const tableBody = document.getElementById('user-table-body');
@@ -169,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background-color:${dotColor}; margin-right:5px;"></span>
                             ${user.status}
                         </td>
-                        <td style="padding: 10px;">${user.lastSeen}</td>
+                        <td style="padding: 10px;">${formatTimeAgo(user.lastSeen)}</td>
                         <td style="padding: 10px;"><button class="btn-small">Edytuj</button></td>
                         <td style="padding: 10px;"><button class="btn-small">Usuń</button></td>
                     </tr>
