@@ -14,13 +14,15 @@ public class UserResponse {
     private String role;
     private String status;
     private ZonedDateTime lastSeen;
+    private String tags;
 
-    public UserResponse(UUID id, String username, String role, String status, ZonedDateTime lastSeen) {
+    public UserResponse(UUID id, String username, String role, String status, ZonedDateTime lastSeen, String tags) {
         this.id = id;
         this.username = username;
         this.role = role;
         this.status = status;
         this.lastSeen = lastSeen;
+        this.tags = tags;
     }
 
     public UUID getId() {
@@ -62,4 +64,6 @@ public class UserResponse {
     public void setLastSeen(ZonedDateTime lastSeen) {
         this.lastSeen = lastSeen;
     }
+
+    public String getTags() { return tags; }
 }
