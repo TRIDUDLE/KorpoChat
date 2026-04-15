@@ -300,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // clear old data
             tableBody.innerHTML = '';
 
-            // Wygeneruj wiersze
+            // render new rows with user data
             users.forEach(user => {
                 const dotColor = user.status === 'ONLINE' ? 'green' : 'gray';
                 
@@ -334,8 +334,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
             const messages = await api.getMessages();
-            // Render each message from storage
-            messages.forEach(msg => renderSingleMessage(msg));
             
             // Auto-scroll to the newest message
             messages.scrollTop = messages.scrollHeight;
