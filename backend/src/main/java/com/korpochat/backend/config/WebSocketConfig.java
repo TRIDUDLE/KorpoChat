@@ -15,10 +15,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // The endpoint that clients will use to connect to our WebSocket server
-        registry.addEndpoint("/ws")
+
+        registry.addEndpoint("/api/ws")
                 .setAllowedOriginPatterns("*") // Allows cross-origin requests (CORS)
-                .withSockJS(); // Fallback mechanism if raw WebSockets are not supported
+                .withSockJS(); // Fallback mechanism
     }
 
     @Override

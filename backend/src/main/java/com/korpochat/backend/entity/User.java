@@ -91,4 +91,14 @@ public class User {
     public void setCreatedAt(ZonedDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+    private String tags;
+
+    public String getTags() {
+        return tags;
+    }
+
+    public void setTags(String tags) {
+        this.tags = tags;
+    }
 }

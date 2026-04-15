@@ -59,4 +59,16 @@ public class UserController {
         userService.deleteUser(username);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Endpoint to update only the tags for a specific user.
+     */
+    @PutMapping("/{username}/tags")
+    public ResponseEntity<UserResponse> updateUserTags(
+            @PathVariable String username,
+            @RequestBody com.korpochat.backend.dto.UpdateTagsRequest request) {
+
+        UserResponse updatedUser = userService.updateUserTags(username, request);
+        return ResponseEntity.ok(updatedUser);
+    }
 }
