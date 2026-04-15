@@ -1,14 +1,11 @@
 package com.korpochat.backend.controller;
 
+import com.korpochat.backend.dto.UpdateUserRequest;
 import com.korpochat.backend.dto.UserRequest;
 import com.korpochat.backend.dto.UserResponse;
 import com.korpochat.backend.service.UserService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -41,5 +38,25 @@ public class UserController {
     public ResponseEntity<UserResponse> addUser(@RequestBody UserRequest request) {
         UserResponse newUser = userService.addUser(request);
         return ResponseEntity.ok(newUser);
+    }
+
+    /**
+     * Endpoint to edit an existing user (password and/or role).
+     */
+    @PutMapping("/{username}")
+    public ResponseEntity<UserResponse> updateUser(
+            @PathVariable String username,
+            @RequestBody UpdateUserRequest request) {
+        UserResponse updatedUser = userService.updateUser(username, request);
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    /**
+     * Endpoint to delete a user.
+     */
+    @DeleteMapping("/{username}")
+    public ResponseEntity<Void> deleteUser(@PathVariable String username) {
+        userService.deleteUser(username);
+        return ResponseEntity.noContent().build();
     }
 }
