@@ -40,10 +40,44 @@ document.addEventListener('DOMContentLoaded', () => {
     //keep track of wwho is logged and what are their permisions
     let currentUserRole = null;
 
-    // API calls
-    let currentMessageCount = 0; 
-    let pollingInterval = null;
+    // WebSocket Configuration
+    let stompClient = null;
+
+    const connectWebSocket = () => {
+        // Connect via relative path so Nginx handles the routing correctly
+        const socket = new SockJS('/api/ws'); 
+        stompClient = Stomp.over(socket);
+
+        // Disable console debug spam
+        stompClient.debug = null; 
+
+        stompClient.connect({}, (frame) => {
+            console.log('Connected to WebSocket channel: ' + frame);
+
+            // Subscribe to the public topic
+            stompClient.subscribe('/topic/public', (messageOutput) => {
+                const newMessage = JSON.parse(messageOutput.body);
+                
+                // Render the incoming message
+                renderSingleMessage(newMessage);
+                
+                // Auto-scroll to the bottom
+                if (ChatMessages) {
+                    ChatMessages.scrollTop = ChatMessages.scrollHeight;
+                }
+            });
+        }, (error) => {
+            console.error('Błąd WebSocket:', error);
     
+        });
+    };
+
+    const disconnectWebSocket = () => {
+        if (stompClient !== null) {
+            stompClient.disconnect();
+        }
+        console.log("Disconnected from WebSocket");
+    };    
     // DOM elements buttons & forms
     const loginForm = document.getElementById('login-form');
     const logoutBtn = document.getElementById('logout-btn');
@@ -83,11 +117,9 @@ document.addEventListener('DOMContentLoaded', () => {
             document.title = "KorpoChat";
             await loadChatHistory(); 
 
-            //JAVASCRIPT POLLING - start polling for new messages after successful login
-            startChatPolling();
-            
-            
-
+            // Connect to WebSocket for real-time updates after successful login
+            connectWebSocket();         
+        
         } catch (error) {
             alert("Error logging in!");
             console.error("Login error:", error);
@@ -104,18 +136,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Prevent sending empty messages
             if (text.length > 0) {
                 try {
-                    // Send message Via API api.js
-                    const savedMessage = await api.sendMessage(currentUser, text);
+                    // Send message via HTTP API
+                    await api.sendMessage(currentUser, text);
                     
-                    // show the new message
-                    renderSingleMessage(savedMessage);
-                    currentMessageCount++;
-                    
-                    // Clear the input field
+                    // Clear the input field instantly
                     messageInput.value = '';
-                    
-                    // autoscrolling to the bottom
-                    ChatMessages.scrollTop = ChatMessages.scrollHeight;
                 } catch (error) {
                     console.error("Failed to send message:", error);
                 }
@@ -240,8 +265,9 @@ document.addEventListener('DOMContentLoaded', () => {
         //reset all user-related data and states
         currentUser = null; 
         currentUserRole = null; 
-        currentMessageCount = 0; // RESET MESSAGE COUNTER
-        stopChatPolling();       // stop polling for new messages when logged out
+
+        // Disconnect from WebSocket to stop receiving messages
+        disconnectWebSocket(); 
 
         // Show login view, hide others
         appView.classList.add('hidden');
@@ -310,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const messages = await api.getMessages();
             // Render each message from storage
             messages.forEach(msg => renderSingleMessage(msg));
-            currentMessageCount = messages.length; // set counter to current messages            
+            
             // Auto-scroll to the newest message
             messages.scrollTop = messages.scrollHeight;
         } catch (error) {
@@ -336,41 +362,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Inject into the DOM
         ChatMessages.innerHTML += messageHtml;
-    }
-    // silent polling function to check for new messages every 1 second
-    async function startChatPolling() {
-        // If there's already a polling interval running, clear it before starting a new one
-        if (pollingInterval) clearInterval(pollingInterval);
-
-        pollingInterval = setInterval(async () => {
-            try {
-                const messages = await api.getMessages();
-                
-                // check if there are new messages by comparing the count of messages we have with the count from the server
-                if (messages.length > currentMessageCount) {
-                    
-                    // take only new messages that we haven't rendered yet
-                    const newMessages = messages.slice(currentMessageCount);
-                    
-                    // Render only new messages
-                    newMessages.forEach(msg => renderSingleMessage(msg));
-                    
-                    // update counter
-                    currentMessageCount = messages.length;
-                    
-                    // scroll to bottom
-                    ChatMessages.scrollTop = ChatMessages.scrollHeight;
-                }
-            } catch (error) {
-                console.error("Polling error (cichy błąd):", error);
-            }
-        }, 1000); // poll every 1 second
-    }
-
-    function stopChatPolling() {
-        if (pollingInterval) {
-            clearInterval(pollingInterval);
-            pollingInterval = null;
-        }
     }
 });
