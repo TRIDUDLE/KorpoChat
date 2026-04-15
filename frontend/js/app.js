@@ -42,47 +42,78 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // WebSocket Configuration
     let stompClient = null;
+    // Keep track of processed messages to prevent backend duplicates (Defensive Programming)
+    const processedMessageIds = new Set();
+    
+    let currentSubscription = null; // Track the current subscription for proper cleanup
 
     const connectWebSocket = () => {
-        // Guard clause: Prevent multiple active WebSocket connections
-        if (stompClient !== null && stompClient.connected) {
-            console.warn('Websocket jest już połączony. Ignorowanie kolejnej próby połączenia.');
-            return; 
-        }
-        // Connect via relative path so Nginx handles the routing correctly
-        const socket = new SockJS('/api/ws'); 
-        stompClient = Stomp.over(socket);
+    disconnectWebSocket();
 
-        // Disable console debug spam
-        stompClient.debug = null; 
+const socket = new SockJS('/api/ws');
+    stompClient = Stomp.over(socket);
+    stompClient.debug = null;
 
-        stompClient.connect({}, (frame) => {
-            console.log('Połączono z kanałem WebSocket: ' + frame);
+    stompClient.connect({}, (frame) => {
+        console.log('✅ Połączono z WebSocket:', frame);
 
-            // Subscribe to the public topic
-            stompClient.subscribe('/topic/public', (messageOutput) => {
+        currentSubscription = stompClient.subscribe('/topic/public', 
+            (messageOutput) => {
                 const newMessage = JSON.parse(messageOutput.body);
                 
-                // Render the incoming message
+                // Defend against backend sending duplicate frames
+                if (processedMessageIds.has(newMessage.id)) {
+                    console.warn("⚠️ Zablokowano zduplikowaną wiadomość z serwera:", newMessage.id);
+                    return; // Halt execution, do not render!
+                }
+                
+                console.log("📨 Otrzymano nową wiadomość:", newMessage);
+                
+                // Add ID to cache and render
+                processedMessageIds.add(newMessage.id);
                 renderSingleMessage(newMessage);
                 
-                // Auto-scroll to the bottom
                 if (ChatMessages) {
                     ChatMessages.scrollTop = ChatMessages.scrollHeight;
                 }
-            });
-        }, (error) => {
-            console.error('Błąd WebSocket:', error);
-            stompClient = null; // Reset client state on error    
-        });
-    };
+            },
+            { id: 'public-chat-subscription' }
+        );
 
-    const disconnectWebSocket = () => {
-        if (stompClient !== null) {
-            stompClient.disconnect();
+    }, (error) => {
+        console.error('❌ Błąd WebSocket:', error);
+        stompClient = null;
+        currentSubscription = null;
+    });
+};
+
+const disconnectWebSocket = () => {
+    console.log("🔴 disconnectWebSocket wywołany – stompClient:", !!stompClient, "subscription:", !!currentSubscription);
+
+    if (currentSubscription) {
+        try {
+            currentSubscription.unsubscribe();
+            console.log("✅ Unsubscribed from /topic/public");
+        } catch (e) {
+            console.warn("Nie udało się unsubscribe", e);
         }
-        console.log("Disconnected from WebSocket");
-    };    
+        currentSubscription = null;
+    }
+
+    if (stompClient !== null) {
+        try {
+            //added callback to confirm disconnection, but also catch any potential errors during disconnect
+            stompClient.disconnect(() => {
+                console.log("✅ WebSocket rozłączony pomyślnie");
+            }, () => {
+                console.warn("⚠️ Disconnect error");
+            });
+        } catch (e) {
+            console.warn("Błąd podczas disconnect", e);
+        }
+        stompClient = null;
+    }
+}; 
     // DOM elements buttons & forms
     const loginForm = document.getElementById('login-form');
     const logoutBtn = document.getElementById('logout-btn');
@@ -340,8 +371,14 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const messages = await api.getMessages();
 
+            processedMessageIds.clear(); // Clear the cache of processed message IDs before loading history
+            
             // Render each message from storage
-            messages.forEach(msg => renderSingleMessage(msg));
+            messages.forEach(msg => {
+                // Register ID to prevent future duplicates from WS
+                processedMessageIds.add(msg.id);
+                renderSingleMessage(msg);
+            });
 
             // Auto-scroll to the newest message
             ChatMessages.scrollTop = ChatMessages.scrollHeight;
