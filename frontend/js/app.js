@@ -44,6 +44,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let stompClient = null;
 
     const connectWebSocket = () => {
+        // Guard clause: Prevent multiple active WebSocket connections
+        if (stompClient !== null && stompClient.connected) {
+            console.warn('Websocket jest już połączony. Ignorowanie kolejnej próby połączenia.');
+            return; 
+        }
         // Connect via relative path so Nginx handles the routing correctly
         const socket = new SockJS('/api/ws'); 
         stompClient = Stomp.over(socket);
@@ -52,12 +57,15 @@ document.addEventListener('DOMContentLoaded', () => {
         stompClient.debug = null; 
 
         stompClient.connect({}, (frame) => {
-            console.log('Connected to WebSocket channel: ' + frame);
+            console.log('Połączono z kanałem WebSocket: ' + frame);
 
             // Subscribe to the public topic
             stompClient.subscribe('/topic/public', (messageOutput) => {
                 const newMessage = JSON.parse(messageOutput.body);
-                                
+                
+                // Render the incoming message
+                renderSingleMessage(newMessage);
+                
                 // Auto-scroll to the bottom
                 if (ChatMessages) {
                     ChatMessages.scrollTop = ChatMessages.scrollHeight;
@@ -65,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }, (error) => {
             console.error('Błąd WebSocket:', error);
-    
+            stompClient = null; // Reset client state on error    
         });
     };
 
@@ -113,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             document.title = "KorpoChat";
             await loadChatHistory(); 
-
+            
             // Connect to WebSocket for real-time updates after successful login
             connectWebSocket();         
         
@@ -148,26 +156,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const userTableBody = document.getElementById('user-table-body');
     if (userTableBody) {
         userTableBody.addEventListener('click', async (e) => {
-            
+            const deleteBtn = e.target.closest('.btn-delete');
+            const editTagsBtn = e.target.closest('.btn-edit-tags');
+            const editPassBtn = e.target.closest('.btn-edit:not(.btn-edit-tags)');
+
             // Handle DELETE action
-            if (e.target.classList.contains('btn-delete')) {
-                const targetUsername = e.target.getAttribute('data-username');
-                
-                // Security prompt before permanent deletion
-                if (confirm(`Czy na pewno chcesz usunąć pracownika: ${targetUsername}? tej czynności nie można cofnąć.`)) {
+            if (deleteBtn) {
+                const targetUsername = deleteBtn.getAttribute('data-username');
+
+                if (confirm(`Czy na pewno chcesz usunąć użytkownika ${targetUsername}?`)) {
                     try {
                         await api.deleteUser(targetUsername);
-                        alert(`Pracownik ${targetUsername} został usunięty.`);
-                        await renderAdminTable(); // Refresh table
+                        alert(`Użytkownik ${targetUsername} został usunięty.`);
+                        await renderAdminTable(); // Refresh table after deletion
                     } catch (error) {
-                        alert("Failed to delete user. Check server logs.");
+                        alert("Nie udało się usunąć użytkownika. Sprawdź logi serwera.");
                     }
                 }
             }
-            //handle TAGS EDIT action
-            if (e.target.classList.contains('btn-edit-tags')) {
-                const targetUsername = e.target.getAttribute('data-username');
-                const currentTags = e.target.getAttribute('data-current-tags');
+            else if (editTagsBtn) {
+                const targetUsername = editTagsBtn.getAttribute('data-username');
+                const currentTags = editTagsBtn.getAttribute('data-current-tags') || '';
                 
                 // Prompt user for new tags, pre-filled with current tags
                 const newTags = prompt(`Tagi dla ${targetUsername} (oddzielone przecinkiem):`, currentTags);
@@ -178,30 +187,28 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Send update request to backend
                         await api.updateUserTags(targetUsername, newTags.trim());
                         alert(`Tagi dla ${targetUsername} zostały zaktualizowane.`);
-                        // Refresh the table to show new data
-                        await renderAdminTable(); 
+                        await renderAdminTable(); // Refresh the table
                     } catch (error) {
                         alert("Nie udało się zaktualizować tagów. Sprawdź logi serwera.");
                     }
                 }
             }
-            // Handle passwordEDIT action
-            if (e.target.classList.contains('btn-edit')) {
-                const targetUsername = e.target.getAttribute('data-username');
+            //PASSWORD EDIT -
+            else if (editPassBtn) {
+                const targetUsername = editPassBtn.getAttribute('data-username');
                 
-                // For MVP: Simple prompt to change password. 
-                // In production, this should open a modal window.
+                // Prompt to change password
                 const newPassword = prompt(`Wprowadź nowe hasło dla ${targetUsername} (pozostaw puste, aby anulować):`);
                 
                 if (newPassword && newPassword.trim() !== "") {
                     try {
                         await api.updateUser(targetUsername, newPassword);
-                        alert(`Hasło dla ${targetUsername} Zostało zaktualizowane.`);
+                        alert(`Hasło dla ${targetUsername} zostało zaktualizowane.`);
                     } catch (error) {
                         alert("Nie udało się zaktualizować hasła. Sprawdź logi serwera.");
                     }
                 }
-            }
+            };
         });
     }
     if (addUserForm) {
@@ -218,12 +225,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 //clearing fields
                 addUserForm.reset();
-
+            
                 await renderAdminTable();
-
+                
+                alert(`Dodano użytkownika: ${newUsernameInput} \nz rolą ${newRoleInput} \ni tagami ${newTagsInput}`);
                 console.log(`Dodano użytkownika: ${newUsernameInput} z rolą ${newRoleInput} i tagami ${newTagsInput}`);
             }catch(error){
-                console.error("ERROR when adding user:", error);
+                alert(`Błąd: ${error.message}`);
             }
         });
     }
@@ -331,12 +339,34 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
             const messages = await api.getMessages();
-            
+
+            // Render each message from storage
+            messages.forEach(msg => renderSingleMessage(msg));
+
             // Auto-scroll to the newest message
-            messages.scrollTop = messages.scrollHeight;
+            ChatMessages.scrollTop = ChatMessages.scrollHeight;
         } catch (error) {
             console.error("Error loading chat history:", error);
             ChatMessages.innerHTML = '<p style="color:red;">Error loading messages.</p>';
         }
+    }
+    function renderSingleMessage(msg) {
+        if (!ChatMessages) return;
+
+        // Extract hour and minute from the ISO string
+        const dateObj = new Date(msg.timestamp);
+        const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // Build HTML structure for the message
+        const messageHtml = `
+            <div class="message" style="margin-bottom: 10px; padding: 10px; background: #f1f1f1; border-radius: 5px;">
+                <strong style="color: #3b82f6;">${msg.sender}</strong> 
+                <span style="font-size: 0.8rem; color: #888; margin-left: 10px;">${timeString}</span>
+                <p style="margin-top: 5px; word-wrap: break-word;">${msg.text}</p>
+            </div>
+        `;
+
+        // Inject into the DOM
+        ChatMessages.innerHTML += messageHtml;
     }
 });
