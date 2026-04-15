@@ -4,6 +4,7 @@
         // Base URL for API requests (relative to the frontend server because nginx will proxy /api to the backend)
         BASE_URL: '/api',
 
+        //handle login request to backend
         login: async (username, password) => {
             try {
                 //sending true HTTP POST request to Spring Boot server
@@ -34,7 +35,7 @@
                 throw error; 
             }
         },
-
+        //handle fetching users for admin panel
         getUsers: async () => {
             try{
                 const response = await fetch(`${api.BASE_URL}/users`, {
@@ -57,6 +58,7 @@
             }
         
         },
+        //handle adding user
         addUser: async (username,password,role) => {
             try{
                 const response = await fetch(`${api.BASE_URL}/users`, {
@@ -67,7 +69,8 @@
                     body: JSON.stringify({
                         username: username,
                         password: password,
-                        role: role
+                        role: role,
+                        tags:tags
                     })
                 });
                 if (!response.ok) {
@@ -80,6 +83,67 @@
                 throw error;
             }
         },
+        //handle deleting user
+        deleteUser: async (username) => {
+            try{
+                const response = await fetch(`${api.BASE_URL}/users/${username}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Nie udało się usunąć użytkownika! Sprawdź logi serwera.');
+                }
+                return await response.json();
+
+            } catch (error) {
+                console.error("błąd serwera podczas usuwania użytkownika", error);
+                throw error;
+            }
+        },
+
+        //handle updating user password
+        updateUser: async (username, newPassword) => {
+            try{
+                const response = await fetch(`${api.BASE_URL}/users/${username}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        password: newPassword
+                    })
+                });
+                if (!response.ok) {
+                    throw new Error('Nie udało się zaktualizować hasła! Sprawdź logi serwera.');
+                }
+                return await response.json();
+
+            } catch (error) {
+                console.error("błąd serwera podczas aktualizacji hasła", error);
+                throw error;
+            }
+        },
+        //handle updating user tags
+        updateUserTags: async (username, tags) => {
+            try {
+                const response = await fetch(`${api.BASE_URL}/users/${username}/tags`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tags: tags })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Nie udało się zaktualizować tagów! Sprawdź logi serwera.');
+                }
+            } catch (error) {
+                console.error("błąd API podczas aktualizacji tagów:", error);
+                throw error;
+            }
+        },
+
+        //handle fetching chat history
         getMessages: async () => {
             try {
                 const response = await fetch(`${api.BASE_URL}/messages`, {
@@ -98,6 +162,7 @@
                 throw(error);
             }
         },
+        //handle sending new message to server
         sendMessage: async (sender, text) => {
             try {
                 const response = await fetch(`${api.BASE_URL}/messages`, {

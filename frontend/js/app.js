@@ -122,16 +122,77 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    // Event delegation for dynamically generated table buttons
+    const userTableBody = document.getElementById('user-table-body');
+    if (userTableBody) {
+        userTableBody.addEventListener('click', async (e) => {
+            
+            // Handle DELETE action
+            if (e.target.classList.contains('btn-delete')) {
+                const targetUsername = e.target.getAttribute('data-username');
+                
+                // Security prompt before permanent deletion
+                if (confirm(`Czy na pewno chcesz usunąć pracownika: ${targetUsername}? tej czynności nie można cofnąć.`)) {
+                    try {
+                        await api.deleteUser(targetUsername);
+                        alert(`Pracownik ${targetUsername} został usunięty.`);
+                        await renderAdminTable(); // Refresh table
+                    } catch (error) {
+                        alert("Failed to delete user. Check server logs.");
+                    }
+                }
+            }
+            //handle TAGS EDIT action
+            if (e.target.classList.contains('btn-edit-tags')) {
+                const targetUsername = e.target.getAttribute('data-username');
+                const currentTags = e.target.getAttribute('data-current-tags');
+                
+                // Prompt user for new tags, pre-filled with current tags
+                const newTags = prompt(`Tagi dla ${targetUsername} (oddzielone przecinkiem):`, currentTags);
+                
+                // Proceed only if user clicked "OK" (newTags is not null)
+                if (newTags !== null) {
+                    try {
+                        // Send update request to backend
+                        await api.updateUserTags(targetUsername, newTags.trim());
+                        alert(`Tagi dla ${targetUsername} zostały zaktualizowane.`);
+                        // Refresh the table to show new data
+                        await renderAdminTable(); 
+                    } catch (error) {
+                        alert("Nie udało się zaktualizować tagów. Sprawdź logi serwera.");
+                    }
+                }
+            }
+            // Handle passwordEDIT action
+            if (e.target.classList.contains('btn-edit')) {
+                const targetUsername = e.target.getAttribute('data-username');
+                
+                // For MVP: Simple prompt to change password. 
+                // In production, this should open a modal window.
+                const newPassword = prompt(`Wprowadź nowe hasło dla ${targetUsername} (pozostaw puste, aby anulować):`);
+                
+                if (newPassword && newPassword.trim() !== "") {
+                    try {
+                        await api.updateUser(targetUsername, newPassword);
+                        alert(`Hasło dla ${targetUsername} Zostało zaktualizowane.`);
+                    } catch (error) {
+                        alert("Nie udało się zaktualizować hasła. Sprawdź logi serwera.");
+                    }
+                }
+            }
+        });
+    }
     if (addUserForm) {
         addUserForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const newUsernameInput = document.getElementById('new-username').value;
             const newPasswordInput = document.getElementById('new-password').value;
             const newRoleInput = document.getElementById('new-role').value;
+            const newTagsInput = document.getElementById('new-tags').value; // NEW TAGS INPUT
 
             try{
                 //pass data to API
-                await api.addUser(newUsernameInput,newPasswordInput, newRoleInput);
+                await api.addUser(newUsernameInput,newPasswordInput, newRoleInput, newTagsInput);
 
                 //clearing fields
                 addUserForm.reset();
@@ -150,8 +211,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         //security check - only admins can access
         if(currentUserRole !== 'ADMIN'){
-            alert("Access denied! no snooping! Admins only.");
-            console.warn("No access! bad try dirty hacker");
+            alert("ZABRONIONY DOSTĘP! Nie masz uprawnień do tej sekcji.");
+            console.warn("Nie ma dostępu dla hackeruw");
             return; //halt
         }
         
@@ -222,12 +283,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td style="padding: 10px;">${user.username}</td>
                         <td style="padding: 10px;"><strong>${user.role}</strong></td>
                         <td style="padding: 10px;">
+                            <span class="badge" style="background: #e2e3e5; color: #41464b;">${user.tags || 'Brak'}</span>
+                        </td>
+                        <td style="padding: 10px;">
                             <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background-color:${dotColor}; margin-right:5px;"></span>
                             ${user.status}
                         </td>
                         <td style="padding: 10px;">${formatTimeAgo(user.lastSeen)}</td>
-                        <td style="padding: 10px;"><button class="btn-small">Edytuj</button></td>
-                        <td style="padding: 10px;"><button class="btn-small">Usuń</button></td>
+                        <td style="padding: 10px;"><button class="btn-small btn-edit" data-username="${user.username}">Zmień Hasło</button></td>
+                        <td style="padding: 10px;"><button class="btn-small btn-edit btn-edit-tags" data-username="${user.username}" data-current-tags="${user.tags || ''}" style="margin-left: 5px;">Zmień Tagi</button></td>
+                        <td style="padding: 10px;"><button class="btn-small btn-delete btn-danger" data-username="${user.username}">Usuń</button></td>
                     </tr>
                 `;
             });
