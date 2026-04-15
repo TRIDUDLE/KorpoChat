@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 await renderAdminTable();
 
-                console.log(`Added user: ${newUsernameInput} with role ${newRoleInput}`);
+                console.log(`Dodano użytkownika: ${newUsernameInput} z rolą ${newRoleInput} i tagami ${newTagsInput}`);
             }catch(error){
                 console.error("ERROR when adding user:", error);
             }

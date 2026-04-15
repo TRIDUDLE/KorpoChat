@@ -205,6 +205,14 @@ body {
     background-color: #f1f3f5;
     font-weight: 600;
 }
+/* Add hover effect to table rows */
+.admin-table tbody tr:hover {
+    background-color: #e0e3e6; 
+    transition: background-color 0.2s ease; 
+}
+.admin-table tbody tr {
+    cursor: default; 
+}
 
 .badge {
     padding: 4px 8px;

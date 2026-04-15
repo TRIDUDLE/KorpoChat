@@ -59,7 +59,7 @@
         
         },
         //handle adding user
-        addUser: async (username,password,role) => {
+        addUser: async (username,password,role,tags) => {
             try{
                 const response = await fetch(`${api.BASE_URL}/users`, {
                     method: 'POST',
@@ -70,7 +70,7 @@
                         username: username,
                         password: password,
                         role: role,
-                        tags:tags
+                        tags: tags
                     })
                 });
                 if (!response.ok) {
