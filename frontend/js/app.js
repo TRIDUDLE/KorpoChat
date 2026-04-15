@@ -57,10 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Subscribe to the public topic
             stompClient.subscribe('/topic/public', (messageOutput) => {
                 const newMessage = JSON.parse(messageOutput.body);
-                
-                // Render the incoming message
-                renderSingleMessage(newMessage);
-                
+                                
                 // Auto-scroll to the bottom
                 if (ChatMessages) {
                     ChatMessages.scrollTop = ChatMessages.scrollHeight;
@@ -341,24 +338,5 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Error loading chat history:", error);
             ChatMessages.innerHTML = '<p style="color:red;">Error loading messages.</p>';
         }
-    }
-    function renderSingleMessage(msg) {
-        if (!ChatMessages) return;
-
-        // Extract hour and minute from the ISO string
-        const dateObj = new Date(msg.timestamp);
-        const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-        // Build HTML structure for the message
-        const messageHtml = `
-            <div class="message" style="margin-bottom: 10px; padding: 10px; background: #f1f1f1; border-radius: 5px;">
-                <strong style="color: #3b82f6;">${msg.sender}</strong> 
-                <span style="font-size: 0.8rem; color: #888; margin-left: 10px;">${timeString}</span>
-                <p style="margin-top: 5px; word-wrap: break-word;">${msg.text}</p>
-            </div>
-        `;
-
-        // Inject into the DOM
-        ChatMessages.innerHTML += messageHtml;
     }
 });
