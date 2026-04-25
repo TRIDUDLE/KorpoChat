@@ -40,10 +40,80 @@ document.addEventListener('DOMContentLoaded', () => {
     //keep track of wwho is logged and what are their permisions
     let currentUserRole = null;
 
-    // API calls
-    let currentMessageCount = 0; 
-    let pollingInterval = null;
+    // WebSocket Configuration
+    let stompClient = null;
+    // Keep track of processed messages to prevent backend duplicates (Defensive Programming)
+    const processedMessageIds = new Set();
     
+    let currentSubscription = null; // Track the current subscription for proper cleanup
+
+    const connectWebSocket = () => {
+    disconnectWebSocket();
+
+const socket = new SockJS('/api/ws');
+    stompClient = Stomp.over(socket);
+    stompClient.debug = null;
+
+    stompClient.connect({}, (frame) => {
+        console.log('✅ Połączono z WebSocket:', frame);
+
+        currentSubscription = stompClient.subscribe('/topic/public', 
+            (messageOutput) => {
+                const newMessage = JSON.parse(messageOutput.body);
+                
+                // Defend against backend sending duplicate frames
+                if (processedMessageIds.has(newMessage.id)) {
+                    console.warn("⚠️ Zablokowano zduplikowaną wiadomość z serwera:", newMessage.id);
+                    return; // Halt execution, do not render!
+                }
+                
+                console.log("📨 Otrzymano nową wiadomość:", newMessage);
+                
+                // Add ID to cache and render
+                processedMessageIds.add(newMessage.id);
+                renderSingleMessage(newMessage);
+                
+                if (ChatMessages) {
+                    ChatMessages.scrollTop = ChatMessages.scrollHeight;
+                }
+            },
+            { id: 'public-chat-subscription' }
+        );
+
+    }, (error) => {
+        console.error('❌ Błąd WebSocket:', error);
+        stompClient = null;
+        currentSubscription = null;
+    });
+};
+
+const disconnectWebSocket = () => {
+    console.log("🔴 disconnectWebSocket wywołany – stompClient:", !!stompClient, "subscription:", !!currentSubscription);
+
+    if (currentSubscription) {
+        try {
+            currentSubscription.unsubscribe();
+            console.log("✅ Unsubscribed from /topic/public");
+        } catch (e) {
+            console.warn("Nie udało się unsubscribe", e);
+        }
+        currentSubscription = null;
+    }
+
+    if (stompClient !== null) {
+        try {
+            //added callback to confirm disconnection, but also catch any potential errors during disconnect
+            stompClient.disconnect(() => {
+                console.log("✅ WebSocket rozłączony pomyślnie");
+            }, () => {
+                console.warn("⚠️ Disconnect error");
+            });
+        } catch (e) {
+            console.warn("Błąd podczas disconnect", e);
+        }
+        stompClient = null;
+    }
+}; 
     // DOM elements buttons & forms
     const loginForm = document.getElementById('login-form');
     const logoutBtn = document.getElementById('logout-btn');
@@ -82,12 +152,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             document.title = "KorpoChat";
             await loadChatHistory(); 
-
-            //JAVASCRIPT POLLING - start polling for new messages after successful login
-            startChatPolling();
             
-            
-
+            // Connect to WebSocket for real-time updates after successful login
+            connectWebSocket();         
+        
         } catch (error) {
             alert("Error logging in!");
             console.error("Login error:", error);
@@ -104,18 +172,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Prevent sending empty messages
             if (text.length > 0) {
                 try {
-                    // Send message Via API api.js
-                    const savedMessage = await api.sendMessage(currentUser, text);
+                    // Send message via HTTP API
+                    await api.sendMessage(currentUser, text);
                     
-                    // show the new message
-                    renderSingleMessage(savedMessage);
-                    currentMessageCount++;
-                    
-                    // Clear the input field
+                    // Clear the input field instantly
                     messageInput.value = '';
-                    
-                    // autoscrolling to the bottom
-                    ChatMessages.scrollTop = ChatMessages.scrollHeight;
                 } catch (error) {
                     console.error("Failed to send message:", error);
                 }
@@ -126,26 +187,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const userTableBody = document.getElementById('user-table-body');
     if (userTableBody) {
         userTableBody.addEventListener('click', async (e) => {
-            
+            const deleteBtn = e.target.closest('.btn-delete');
+            const editTagsBtn = e.target.closest('.btn-edit-tags');
+            const editPassBtn = e.target.closest('.btn-edit:not(.btn-edit-tags)');
+
             // Handle DELETE action
-            if (e.target.classList.contains('btn-delete')) {
-                const targetUsername = e.target.getAttribute('data-username');
-                
-                // Security prompt before permanent deletion
-                if (confirm(`Czy na pewno chcesz usunąć pracownika: ${targetUsername}? tej czynności nie można cofnąć.`)) {
+            if (deleteBtn) {
+                const targetUsername = deleteBtn.getAttribute('data-username');
+
+                if (confirm(`Czy na pewno chcesz usunąć użytkownika ${targetUsername}?`)) {
                     try {
                         await api.deleteUser(targetUsername);
-                        alert(`Pracownik ${targetUsername} został usunięty.`);
-                        await renderAdminTable(); // Refresh table
+                        alert(`Użytkownik ${targetUsername} został usunięty.`);
+                        await renderAdminTable(); // Refresh table after deletion
                     } catch (error) {
-                        alert("Failed to delete user. Check server logs.");
+                        alert("Nie udało się usunąć użytkownika. Sprawdź logi serwera.");
                     }
                 }
             }
-            //handle TAGS EDIT action
-            if (e.target.classList.contains('btn-edit-tags')) {
-                const targetUsername = e.target.getAttribute('data-username');
-                const currentTags = e.target.getAttribute('data-current-tags');
+            else if (editTagsBtn) {
+                const targetUsername = editTagsBtn.getAttribute('data-username');
+                const currentTags = editTagsBtn.getAttribute('data-current-tags') || '';
                 
                 // Prompt user for new tags, pre-filled with current tags
                 const newTags = prompt(`Tagi dla ${targetUsername} (oddzielone przecinkiem):`, currentTags);
@@ -156,30 +218,28 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Send update request to backend
                         await api.updateUserTags(targetUsername, newTags.trim());
                         alert(`Tagi dla ${targetUsername} zostały zaktualizowane.`);
-                        // Refresh the table to show new data
-                        await renderAdminTable(); 
+                        await renderAdminTable(); // Refresh the table
                     } catch (error) {
                         alert("Nie udało się zaktualizować tagów. Sprawdź logi serwera.");
                     }
                 }
             }
-            // Handle passwordEDIT action
-            if (e.target.classList.contains('btn-edit')) {
-                const targetUsername = e.target.getAttribute('data-username');
+            //PASSWORD EDIT -
+            else if (editPassBtn) {
+                const targetUsername = editPassBtn.getAttribute('data-username');
                 
-                // For MVP: Simple prompt to change password. 
-                // In production, this should open a modal window.
+                // Prompt to change password
                 const newPassword = prompt(`Wprowadź nowe hasło dla ${targetUsername} (pozostaw puste, aby anulować):`);
                 
                 if (newPassword && newPassword.trim() !== "") {
                     try {
                         await api.updateUser(targetUsername, newPassword);
-                        alert(`Hasło dla ${targetUsername} Zostało zaktualizowane.`);
+                        alert(`Hasło dla ${targetUsername} zostało zaktualizowane.`);
                     } catch (error) {
                         alert("Nie udało się zaktualizować hasła. Sprawdź logi serwera.");
                     }
                 }
-            }
+            };
         });
     }
     if (addUserForm) {
@@ -196,12 +256,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 //clearing fields
                 addUserForm.reset();
-
+            
                 await renderAdminTable();
-
+                
+                alert(`Dodano użytkownika: ${newUsernameInput} \nz rolą ${newRoleInput} \ni tagami ${newTagsInput}`);
                 console.log(`Dodano użytkownika: ${newUsernameInput} z rolą ${newRoleInput} i tagami ${newTagsInput}`);
             }catch(error){
-                console.error("ERROR when adding user:", error);
+                alert(`Błąd: ${error.message}`);
             }
         });
     }
@@ -240,8 +301,9 @@ document.addEventListener('DOMContentLoaded', () => {
         //reset all user-related data and states
         currentUser = null; 
         currentUserRole = null; 
-        currentMessageCount = 0; // RESET MESSAGE COUNTER
-        stopChatPolling();       // stop polling for new messages when logged out
+
+        // Disconnect from WebSocket to stop receiving messages
+        disconnectWebSocket(); 
 
         // Show login view, hide others
         appView.classList.add('hidden');
@@ -274,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // clear old data
             tableBody.innerHTML = '';
 
-            // Wygeneruj wiersze
+            // render new rows with user data
             users.forEach(user => {
                 const dotColor = user.status === 'ONLINE' ? 'green' : 'gray';
                 
@@ -308,11 +370,18 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
             const messages = await api.getMessages();
+
+            processedMessageIds.clear(); // Clear the cache of processed message IDs before loading history
+            
             // Render each message from storage
-            messages.forEach(msg => renderSingleMessage(msg));
-            currentMessageCount = messages.length; // set counter to current messages            
+            messages.forEach(msg => {
+                // Register ID to prevent future duplicates from WS
+                processedMessageIds.add(msg.id);
+                renderSingleMessage(msg);
+            });
+
             // Auto-scroll to the newest message
-            messages.scrollTop = messages.scrollHeight;
+            ChatMessages.scrollTop = ChatMessages.scrollHeight;
         } catch (error) {
             console.error("Error loading chat history:", error);
             ChatMessages.innerHTML = '<p style="color:red;">Error loading messages.</p>';
@@ -336,41 +405,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Inject into the DOM
         ChatMessages.innerHTML += messageHtml;
-    }
-    // silent polling function to check for new messages every 1 second
-    async function startChatPolling() {
-        // If there's already a polling interval running, clear it before starting a new one
-        if (pollingInterval) clearInterval(pollingInterval);
-
-        pollingInterval = setInterval(async () => {
-            try {
-                const messages = await api.getMessages();
-                
-                // check if there are new messages by comparing the count of messages we have with the count from the server
-                if (messages.length > currentMessageCount) {
-                    
-                    // take only new messages that we haven't rendered yet
-                    const newMessages = messages.slice(currentMessageCount);
-                    
-                    // Render only new messages
-                    newMessages.forEach(msg => renderSingleMessage(msg));
-                    
-                    // update counter
-                    currentMessageCount = messages.length;
-                    
-                    // scroll to bottom
-                    ChatMessages.scrollTop = ChatMessages.scrollHeight;
-                }
-            } catch (error) {
-                console.error("Polling error (cichy błąd):", error);
-            }
-        }, 1000); // poll every 1 second
-    }
-
-    function stopChatPolling() {
-        if (pollingInterval) {
-            clearInterval(pollingInterval);
-            pollingInterval = null;
-        }
     }
 });

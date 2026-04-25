@@ -1,5 +1,6 @@
 package com.korpochat.backend.service;
 
+import com.korpochat.backend.dto.UpdateTagsRequest;
 import com.korpochat.backend.dto.UpdateUserRequest;
 import com.korpochat.backend.dto.UserResponse;
 import com.korpochat.backend.repository.UserRepository;
@@ -32,7 +33,8 @@ public class UserService {
                         user.getUsername(),
                         user.getRole().name(),
                         user.getStatus().name(),
-                        user.getLastSeen()
+                        user.getLastSeen(),
+                        user.getTags() // CRITICAL: Added missing tags mapping here
                 ))
                 .collect(Collectors.toList());
     }
@@ -47,6 +49,9 @@ public class UserService {
         user.setRole(com.korpochat.backend.entity.Role.valueOf(request.getRole().toUpperCase()));
         user.setStatus(com.korpochat.backend.entity.Status.OFFLINE);
 
+        // NEW: Set tags during user creation
+        user.setTags(request.getTags());
+
         user = userRepository.save(user);
 
         return new UserResponse(
@@ -54,7 +59,8 @@ public class UserService {
                 user.getUsername(),
                 user.getRole().name(),
                 user.getStatus().name(),
-                user.getLastSeen()
+                user.getLastSeen(),
+                user.getTags()
         );
     }
 
@@ -82,7 +88,29 @@ public class UserService {
                 user.getUsername(),
                 user.getRole().name(),
                 user.getStatus().name(),
-                user.getLastSeen()
+                user.getLastSeen(),
+                user.getTags()
+        );
+    }
+
+    /**
+     * Updates only the tags for a specific user.
+     * Separated from general user update for cleaner architecture.
+     */
+    public UserResponse updateUserTags(String username, UpdateTagsRequest request) {
+        com.korpochat.backend.entity.User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+
+        user.setTags(request.getTags());
+        user = userRepository.save(user);
+
+        return new UserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getRole().name(),
+                user.getStatus().name(),
+                user.getLastSeen(),
+                user.getTags()
         );
     }
 

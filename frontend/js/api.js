@@ -74,12 +74,32 @@
                     })
                 });
                 if (!response.ok) {
-                    throw new Error('Failed to add user!');
+                    // Extract raw text from response
+                    const errorText = await response.text();
+                    let friendlyMessage = errorText;
+
+                    try {
+                        // Attempt to parse it as JSON (in case it's Spring Boot's default error)
+                        const errorJson = JSON.parse(errorText);
+                        
+                        // If it's a default 500 error from Spring, make it user-friendly
+                        if (errorJson.status === 500 && errorJson.error === "Internal Server Error") {
+                            friendlyMessage = `Użytkownik o loginie "${username}" prawdopodobnie już istnieje.`;
+                        } else if (errorJson.message) {
+                            // If backend eventually sends a custom error object with a 'message' field
+                            friendlyMessage = errorJson.message;
+                        }
+                    } catch (parseError) {
+                        // If it's not JSON, keep the original errorText
+                    }
+
+                    throw new Error(friendlyMessage || 'Wystąpił nieznany błąd zapisu.');
                 }
+                
                 return await response.json();
 
             } catch (error) {
-                console.error("server connection error when adding user:", error);
+                console.error("Server connection error when adding user:", error);
                 throw error;
             }
         },
@@ -88,14 +108,11 @@
             try{
                 const response = await fetch(`${api.BASE_URL}/users/${username}`, {
                     method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
                 });
                 if (!response.ok) {
                     throw new Error('Nie udało się usunąć użytkownika! Sprawdź logi serwera.');
                 }
-                return await response.json();
+                return true; // Return true to indicate successful deletion
 
             } catch (error) {
                 console.error("błąd serwera podczas usuwania użytkownika", error);
