@@ -2,6 +2,8 @@ package com.korpochat.backend.entity;
 
 import jakarta.persistence.*;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -11,6 +13,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "users")
 public class User {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -91,4 +94,19 @@ public class User {
     public void setCreatedAt(ZonedDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+
+    // Mapowanie relacji z tabelą user_departments
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_departments",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "department_id")
+    )
+    private Set<Department> departments = new HashSet<>();
+
+    public Set<Department> getDepartments() { return departments; }
+    public void setDepartments(Set<Department> departments) { this.departments = departments; }
+
+
 }

@@ -17,6 +17,19 @@ CREATE TABLE users (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- TABELA DZIAŁÓW/TAGÓW
+CREATE TABLE departments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(50) UNIQUE NOT NULL -- np. 'IT', 'HR'
+);
+
+-- TABELA ŁĄCZĄCA UŻYTKOWNIKÓW Z DZIAŁAMI (Wiele-do-Wielu)
+CREATE TABLE user_departments (
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    department_id UUID NOT NULL REFERENCES departments(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, department_id)
+);
+
 -- 2. CHANNELS TABLE
 -- channel_type will be stored as a string ('PUBLIC', 'PRIVATE') 
 CREATE TABLE channels (
