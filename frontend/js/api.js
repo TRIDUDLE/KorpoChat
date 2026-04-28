@@ -161,24 +161,22 @@
         },
 
         //handle fetching chat history
-        getMessages: async () => {
+        getMessages: async (channelId) => {
             try {
-                const response = await fetch(`${api.BASE_URL}/messages`, {
+                // Zwróć uwagę na /${channelId} na końcu!
+                const response = await fetch(`${api.BASE_URL}/messages/${channelId}`, {
                     method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+                    headers: { 'Content-Type': 'application/json' }
                 });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to fetch chat history from server!');
-                }
+
+                if (!response.ok) throw new Error('Failed to fetch chat history!');
                 return await response.json();
             } catch(error){
                 console.error("server connection error:", error);
                 throw(error);
             }
         },
+
         //handle sending new message to server
         sendMessage: async (sender, text) => {
             try {
@@ -219,5 +217,27 @@
             }catch(error){
                 console.error("server connection error when logging out:", error);
             }
-        }
+        },
+        // Tworzenie nowego kanału (Panel Admina)
+        createChannel: async (adminUsername, channelData) => {
+            try {
+                const response = await fetch(`${api.BASE_URL}/channels`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Requester-Username': adminUsername // Wymagane przez ChannelController
+                    },
+                    body: JSON.stringify(channelData)
+                });
+
+                if (!response.ok) {
+                    const errorMsg = await response.text();
+                    throw new Error(errorMsg || 'Błąd podczas tworzenia kanału');
+                }
+                return await response.json();
+            } catch (error) {
+                console.error("Błąd api.createChannel:", error);
+                throw error;
+            }
+        },
     };

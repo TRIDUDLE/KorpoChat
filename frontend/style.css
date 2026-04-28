@@ -233,6 +233,55 @@ body {
     cursor: pointer;
     font-weight: bold;
 }
+
+/* --- SCROLL DLA CZATU --- */
+.chat-messages {
+    /* Ustalenie wysokości. Jeśli używasz flexboxa, lepiej sprawdzi się: flex-grow: 1; i max-height */
+    height: calc(100vh - 200px); /* Odejmujemy miejsce na nagłówek i pole wpisywania */
+    overflow-y: auto; /* To włącza pionowy scroll! */
+    padding: 15px;
+    background-color: #ffffff;
+}
+
+/* --- STYLIZACJA PASKA SCROLLA (Chrome, Safari, Edge) --- */
+.chat-messages::-webkit-scrollbar,
+.table-wrapper::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-messages::-webkit-scrollbar-track,
+.table-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb,
+.table-wrapper::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover,
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* --- SCROLL DLA TABELI ADMINA --- */
+.table-wrapper {
+    max-height: 400px; /* Zmień tę wartość w zależności od tego, ile miejsca chcesz przeznaczyć na tabelę */
+    overflow-y: auto;
+    border: 1px solid #eee; /* Opcjonalna ramka dookoła tabeli */
+    border-radius: 5px;
+}
+
+/* Ten mały trik sprawi, że nagłówek tabeli nie zniknie, gdy będziesz scrollować w dół! */
+.admin-table th {
+    position: sticky;
+    top: 0;
+    background-color: #f8f9fa; /* Tło musi być pełne, żeby tekst pod spodem nie prześwitywał */
+    z-index: 1;
+}
+
 .btn-secondary:hover { background-color: #5c636a; }
 
 .btn-danger { background-color: #dc3545; }

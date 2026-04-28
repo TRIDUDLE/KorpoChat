@@ -362,29 +362,28 @@ const disconnectWebSocket = () => {
             tableBody.innerHTML = `<tr><td colspan="5" style="color: red; text-align: center;">Error loading data</td></tr>`;
         }
     }
-    async function loadChatHistory() {
-        if (!ChatMessages) return;
-        
-        // Clear current HTML
-        ChatMessages.innerHTML = ''; 
-        
-        try {
-            const messages = await api.getMessages();
 
-            processedMessageIds.clear(); // Clear the cache of processed message IDs before loading history
-            
-            // Render each message from storage
+
+    async function loadChatHistory(channelId) {
+        if (!ChatMessages || !channelId) return;
+
+        ChatMessages.innerHTML = ''; // Czyścimy ekran
+
+        try {
+            // Pobieramy historię TYLKO dla wybranego kanału
+            const messages = await api.getMessages(channelId);
+
+            processedMessageIds.clear();
+
             messages.forEach(msg => {
-                // Register ID to prevent future duplicates from WS
                 processedMessageIds.add(msg.id);
                 renderSingleMessage(msg);
             });
 
-            // Auto-scroll to the newest message
             ChatMessages.scrollTop = ChatMessages.scrollHeight;
         } catch (error) {
             console.error("Error loading chat history:", error);
-            ChatMessages.innerHTML = '<p style="color:red;">Error loading messages.</p>';
+            ChatMessages.innerHTML = '<p style="color:red; padding: 10px;">Error loading messages.</p>';
         }
     }
     function renderSingleMessage(msg) {
@@ -405,5 +404,62 @@ const disconnectWebSocket = () => {
 
         // Inject into the DOM
         ChatMessages.innerHTML += messageHtml;
+    }
+
+
+    // 1. Nowe odwołania do elementów DOM
+    const addChannelForm = document.getElementById('add-channel-form');
+    const channelNameInput = document.getElementById('channel-name');
+    const channelDescInput = document.getElementById('channel-desc');
+    const channelTagsInput = document.getElementById('channel-tags-input');
+
+    // 2. Obsługa formularza tworzenia kanału
+    if (addChannelForm) {
+        addChannelForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Konwersja ciągu znaków "IT, HR" na tablicę ["IT", "HR"]
+            const tagsArray = channelTagsInput.value
+                .split(',')
+                .map(tag => tag.trim())
+                .filter(tag => tag !== "");
+
+            const channelData = {
+                name: channelNameInput.value,
+                description: channelDescInput.value,
+                channelType: "PRIVATE", // Domyślnie prywatny dla wybranych działów
+                departmentTags: tagsArray // Backend oczekuje List<String>
+            };
+
+            try {
+                await api.createChannel(currentUser, channelData);
+                alert(`Kanał ${channelData.name} został utworzony!`);
+                addChannelForm.reset();
+                // Opcjonalnie: odśwież listę kanałów na pasku bocznym
+                if (typeof loadChannels === "function") await loadChannels();
+            } catch (error) {
+                alert(`Błąd: ${error.message}`);
+            }
+        });
+    }
+
+    // 3. Poprawka dodawania użytkownika (upewnij się, że przesyła tags jako String)
+    if (addUserForm) {
+        addUserForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('new-username').value;
+            const password = document.getElementById('new-password').value;
+            const role = document.getElementById('new-role').value;
+            const tags = document.getElementById('new-tags').value; // String
+
+            try {
+                await api.addUser(username, password, role, tags);
+                alert("Użytkownik dodany pomyślnie!");
+                addUserForm.reset();
+                await renderAdminTable(); // Odświeżenie tabeli
+            } catch (error) {
+                alert(`Błąd: ${error.message}`);
+            }
+        });
     }
 });

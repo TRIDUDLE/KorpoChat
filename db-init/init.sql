@@ -2,18 +2,19 @@
 -- then *docker compose up* to recreate it with the new schema.
 -- !IMPORTANT! This will delete all existing data in the database, so make sure to back up any important data before doing this.
 
--- 1. USERS TABLE
+--- 1. USERS TABLE
 -- roles will be stored as simple string ('USER', 'ADMIN') maybe extended later if needed
 -- IMPORTANT To use string not int in java code, we need to add @Enumerated(EnumType.STRING) to the role field in User entity class.
--- status will be stored as string ('ONLINE', 'OFFLINE') 
+-- status will be stored as string ('ONLINE', 'OFFLINE')
 -- UUID is used as primary key (randomly generated ID)
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username VARCHAR(50) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL, 
+    password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(20) NOT NULL DEFAULT 'USER',
     status VARCHAR(20) NOT NULL DEFAULT 'OFFLINE',
     last_seen TIMESTAMP WITH TIME ZONE,
+    tags VARCHAR(255), -- NOWA KOLUMNA NA TAGI
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -48,6 +49,13 @@ CREATE TABLE channel_members (
     PRIMARY KEY (channel_id, user_id)
 );
 
+-- TABELA ŁĄCZĄCA KANAŁY Z DZIAŁAMI (Wiele-do-Wielu)
+CREATE TABLE channel_departments (
+    channel_id UUID NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
+    department_id UUID NOT NULL REFERENCES departments(id) ON DELETE CASCADE,
+    PRIMARY KEY (channel_id, department_id)
+);
+
 -- 4. MESSAGES TABLE
 -- WARNING: Technical debt introduced here for MVP. 
 -- 'sender' is a string instead of a foreign key, breaking relational integrity.
@@ -59,6 +67,7 @@ CREATE TABLE messages (
     sender VARCHAR(50) NOT NULL, 
     text TEXT NOT NULL,          
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+
 );
 
 -- 5. INITIAL DATA SEEDING

@@ -6,27 +6,24 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
-/**
- * Configuration for WebSocket message broker.
- */
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-
+        // Rejestracja endpointu zgodnego z tym, czego szuka aplikacja kliencka w pliku app.js
         registry.addEndpoint("/api/ws")
-                .setAllowedOriginPatterns("*") // Allows cross-origin requests (CORS)
-                .withSockJS(); // Fallback mechanism
+                .setAllowedOriginPatterns("*") // Niezbędne ustawienia CORS dla WebSocketów
+                .withSockJS(); // Włączenie wsparcia dla SockJS używanego w frontendzie
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        // Enables a simple in-memory broker for broadcasting messages
+        // Uruchamia prosty broker wiadomości w pamięci (prefix używany w MessageController)
         registry.enableSimpleBroker("/topic");
 
-        // Prefix for messages sent FROM the client TO the server
+        // Prefix używany, gdy frontend wysyła wiadomości bezpośrednio do brokera
         registry.setApplicationDestinationPrefixes("/app");
     }
 }
