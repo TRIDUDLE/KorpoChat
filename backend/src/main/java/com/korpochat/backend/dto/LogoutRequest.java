@@ -1,10 +1,15 @@
 package com.korpochat.backend.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 /**
- * DTO for logout payload.
+ * DTO for user logout requests.
  */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class LogoutRequest {
     private String username;
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
 }

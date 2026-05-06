@@ -1,15 +1,12 @@
 package com.korpochat.backend.controller;
 
-import com.korpochat.backend.dto.AuthResponse;
 import com.korpochat.backend.dto.LoginRequest;
 import com.korpochat.backend.dto.LogoutRequest;
+import com.korpochat.backend.entity.User;
 import com.korpochat.backend.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * REST controller for handling authentication endpoints.
- */
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -20,24 +17,15 @@ public class AuthController {
         this.authService = authService;
     }
 
-    /**
-     * Endpoint for user login.
-     */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        try {
-            AuthResponse response = authService.authenticate(request);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(401).body(e.getMessage());
-        }
+    public ResponseEntity<User> login(@RequestBody LoginRequest request) {
+        User user = authService.login(request.getUsername(), request.getPassword());
+        return ResponseEntity.ok(user);
     }
-    /**
-     * Endpoint for user logout.
-     */
+
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestBody LogoutRequest request) {
-        authService.logout(request);
+        authService.logout(request.getUsername());
         return ResponseEntity.ok().build();
     }
 }

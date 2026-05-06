@@ -1,44 +1,51 @@
 package com.korpochat.backend.controller;
 
-import com.korpochat.backend.dto.MessageRequest;
 import com.korpochat.backend.entity.Message;
 import com.korpochat.backend.service.MessageService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * REST controller for handling chat messages with WebSocket broadcasting.
- */
 @RestController
 @RequestMapping("/api/messages")
 public class MessageController {
 
+    private final SimpMessagingTemplate messagingTemplate;
     private final MessageService messageService;
 
-    private final SimpMessagingTemplate messagingTemplate;
-
-    public MessageController(MessageService messageService, SimpMessagingTemplate messagingTemplate) {
-        this.messageService = messageService;
+    public MessageController(SimpMessagingTemplate messagingTemplate, MessageService messageService) {
         this.messagingTemplate = messagingTemplate;
+        this.messageService = messageService;
     }
 
     @GetMapping
-    public ResponseEntity<List<Message>> getMessages() {
+    public ResponseEntity<List<Message>> getChatHistory() {
         return ResponseEntity.ok(messageService.getAllMessages());
     }
 
     @PostMapping
-    public ResponseEntity<Message> sendMessage(@RequestBody MessageRequest request) {
-        // 1. Save message to PostgreSQL
-        Message savedMessage = messageService.saveMessage(request);
+    public ResponseEntity<Message> postMessage(@RequestBody Message message) {
+        Message saved = messageService.saveMessage(message);
+        messagingTemplate.convertAndSend("/topic/public", saved);
+        return ResponseEntity.ok(saved);
+    }
 
-        // 2. BROADCAST: Send the saved message to all users subscribed to /topic/public
-        messagingTemplate.convertAndSend("/topic/public", savedMessage);
+    @MessageMapping("/chat.sendMessage")
+    public void sendMessage(@Payload Message chatMessage) {
+        Message processedMessage = messageService.saveMessage(chatMessage);
+        messagingTemplate.convertAndSend("/topic/public", processedMessage);
+    }
 
-        // 3. Return response to the sender
-        return ResponseEntity.ok(savedMessage);
+    @MessageMapping("/chat.addUser")
+    public void addUser(@Payload Message chatMessage, SimpMessageHeaderAccessor headerAccessor) {
+        if (headerAccessor.getSessionAttributes() != null) {
+            headerAccessor.getSessionAttributes().put("username", chatMessage.getSender());
+        }
+        messagingTemplate.convertAndSend("/topic/public", chatMessage);
     }
 }

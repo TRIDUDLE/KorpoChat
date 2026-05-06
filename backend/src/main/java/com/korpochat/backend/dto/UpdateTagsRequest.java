@@ -1,16 +1,15 @@
 package com.korpochat.backend.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 /**
- * DTO for updating user tags independently.
+ * DTO for updating user tags.
  */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class UpdateTagsRequest {
     private String tags;
-
-    public String getTags() {
-        return tags;
-    }
-
-    public void setTags(String tags) {
-        this.tags = tags;
-    }
 }

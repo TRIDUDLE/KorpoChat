@@ -1,14 +1,15 @@
 package com.korpochat.backend.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 /**
- * Data Transfer Object for updating an existing user.
+ * DTO for updating user password.
  */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class UpdateUserRequest {
     private String password;
-    private String role;
-
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
 }

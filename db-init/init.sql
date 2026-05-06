@@ -48,8 +48,3 @@ CREATE TABLE messages (
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 5. INITIAL DATA SEEDING
-INSERT INTO users (id, username, password_hash, role, status, last_seen) 
-VALUES 
-(gen_random_uuid(), 'admin', 'admin', 'ADMIN', 'OFFLINE', NOW()),
-(gen_random_uuid(), 'user', 'user', 'USER', 'ONLINE', NOW());

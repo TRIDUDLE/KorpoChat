@@ -1,39 +1,36 @@
 package com.korpochat.backend.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
-/**
- * Entity representing a single chat message in the database.
- */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "messages")
 public class Message {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(name = "channel_id")
+    private UUID channelId;
+
     private String sender;
+
+    @Column(columnDefinition = "TEXT")
     private String text;
+
     private ZonedDateTime timestamp;
 
-    public Message() {}
+    @Transient
+    private MessageType type;
 
-    public Message(String sender, String text, ZonedDateTime timestamp) {
-        this.sender = sender;
-        this.text = text;
-        this.timestamp = timestamp;
+    public enum MessageType {
+        CHAT, JOIN, LEAVE
     }
-
-    // Getters and Setters
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
-    public String getSender() { return sender; }
-    public void setSender(String sender) { this.sender = sender; }
-    public String getText() { return text; }
-    public void setText(String text) { this.text = text; }
-    public ZonedDateTime getTimestamp() { return timestamp; }
-    public void setTimestamp(ZonedDateTime timestamp) { this.timestamp = timestamp; }
 }

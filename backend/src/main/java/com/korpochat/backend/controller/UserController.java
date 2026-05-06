@@ -1,17 +1,15 @@
 package com.korpochat.backend.controller;
 
-import com.korpochat.backend.dto.UpdateUserRequest;
 import com.korpochat.backend.dto.UserRequest;
-import com.korpochat.backend.dto.UserResponse;
+import com.korpochat.backend.dto.UpdateUserRequest;
+import com.korpochat.backend.dto.UpdateTagsRequest;
+import com.korpochat.backend.entity.User;
 import com.korpochat.backend.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * REST controller for managing user data endpoints.
- */
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -22,53 +20,38 @@ public class UserController {
         this.userService = userService;
     }
 
-    /**
-     * Endpoint to fetch a list of all registered users.
-     */
     @GetMapping
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
-        List<UserResponse> users = userService.getAllUsers();
-        return ResponseEntity.ok(users);
+    public ResponseEntity<List<User>> getUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    /**
-     * Endpoint to register a new user.
-     */
     @PostMapping
-    public ResponseEntity<UserResponse> addUser(@RequestBody UserRequest request) {
-        UserResponse newUser = userService.addUser(request);
-        return ResponseEntity.ok(newUser);
+    public ResponseEntity<User> addUser(@RequestBody UserRequest request) {
+        // Mapping DTO to service call
+        User savedUser = userService.addUser(
+                request.getUsername(),
+                request.getPassword(),
+                request.getRole(),
+                request.getTags()
+        );
+        return ResponseEntity.ok(savedUser);
     }
 
-    /**
-     * Endpoint to edit an existing user (password and/or role).
-     */
     @PutMapping("/{username}")
-    public ResponseEntity<UserResponse> updateUser(
-            @PathVariable String username,
-            @RequestBody UpdateUserRequest request) {
-        UserResponse updatedUser = userService.updateUser(username, request);
-        return ResponseEntity.ok(updatedUser);
+    public ResponseEntity<Void> updatePassword(@PathVariable String username, @RequestBody UpdateUserRequest request) {
+        userService.updatePassword(username, request.getPassword());
+        return ResponseEntity.ok().build();
     }
 
-    /**
-     * Endpoint to delete a user.
-     */
+    @PutMapping("/{username}/tags")
+    public ResponseEntity<Void> updateTags(@PathVariable String username, @RequestBody UpdateTagsRequest request) {
+        userService.updateTags(username, request.getTags());
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/{username}")
     public ResponseEntity<Void> deleteUser(@PathVariable String username) {
         userService.deleteUser(username);
-        return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * Endpoint to update only the tags for a specific user.
-     */
-    @PutMapping("/{username}/tags")
-    public ResponseEntity<UserResponse> updateUserTags(
-            @PathVariable String username,
-            @RequestBody com.korpochat.backend.dto.UpdateTagsRequest request) {
-
-        UserResponse updatedUser = userService.updateUserTags(username, request);
-        return ResponseEntity.ok(updatedUser);
+        return ResponseEntity.ok().build();
     }
 }
