@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <title>KorpoChat - Workspace</title>
     <link rel="stylesheet" href="./style.css">
 </head>
@@ -33,11 +34,8 @@
             </div>
             
             <div class="admin-controls hidden" id="admin-controls">
-                <button id="go-to-admin-btn" class="btn-secondary" style="width: 100%; margin: 10px 0;">Panel Administratora</button>
-            </div>
-
+            <button id="go-to-admin-btn" class="btn-secondary" style="width: 80%; display: block; margin: 15px auto;">Panel Administratora</button></div>
             <ul class="channel-list" id="channel-list">
-                <li class="channel active">#główny</li>
             </ul>
         </aside>
         <!-- chat area - main content/ -->
@@ -51,7 +49,7 @@
             </div>
             <form class="chat-input-wrapper" id="chat-form">
                 <input type="text" id="message-input" placeholder="Wpisz wiadomość..." autocomplete="off" required>
-                <button type="submit">Wyślij!</button>
+                <button id="send-message-btn" type="submit">Wyślij!</button>
             </form>
         </main>
     </div>
@@ -68,36 +66,54 @@
         </aside>
 
         <main class="chat-area" style="padding: 20px; background-color: #f8f9fa;">
-            <h2>User Management</h2>
+            <h2>Zarządzanie Użytkownikami</h2>
             
             <div class="admin-card" style="margin-top: 20px;">
-                <h3>Add New Employee</h3>
+                <h3>Dodaj Nowego Pracownika</h3>
                 <form id="add-user-form" style="display: flex; gap: 10px; margin-top: 15px; align-items: flex-end;">
                     <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                        <label>Username</label>
+                        <label>Użytkownik</label>
                         <input type="text" id="new-username" required>
                     </div>
                     <!-- password for new user, default password -->
                     <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                        <label>Initial Password</label>
+                        <label>Hasło początkowe</label>
                         <input type="password" id="new-password" required>
                     </div>  
 
                     <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                        <label>Role</label>
-                        <select id="new-role" style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; width: 100%;">
+                        <label>Rola</label>
+                        <select id="new-role">
                             <option value="USER">User</option>
                             <option value="ADMIN">Admin</option>
                         </select>
                     </div>
 
                     <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                        <label>Tagi / Oddziały</label>
-                        <input type="text" id="new-tags" placeholder="Podaj tagi (oddzielone przecinkiem)">
+                        <small style="display:block; margin-top: 5px; color: #555;">Wybierz dostępne tagi (Ctrl + klik, aby zaznaczyć więcej).</small>
+                        <label>Tagi </label>
+                        <select id="new-tags" multiple size="4"></select>
                     </div>
 
                     <button type="submit" class="btn-primary" style="width: auto; margin-top: 0;">Zarejestruj użytkownika</button>
                 </form>
+            </div>
+
+            <div class="admin-card" style="margin-top: 20px;">
+                <h3>Tworzenie nowych tagów</h3>
+                
+                <div style="display: flex; flex-direction: row; gap: 15px; align-items: flex-end; margin-bottom: 20px; max-width: 500px;">
+                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                        <label for="new-tag-name">Nazwa nowego tagu</label>
+                        <input type="text" id="new-tag-name" placeholder="np. HR" style="width: 100%;">
+                    </div>
+                    <button id="create-tag-btn" class="btn-secondary" style="margin-bottom: 0; padding: 12px 25px;">Utwórz tag</button>
+                </div>
+
+                <div>
+                    <strong style="color: var(--text-dark);">Aktualne tagi:</strong>
+                    <div id="existing-tag-list" style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px;">Ładowanie...</div>
+                </div>
             </div>
 
             <div class="admin-card" style="margin-top: 20px;">

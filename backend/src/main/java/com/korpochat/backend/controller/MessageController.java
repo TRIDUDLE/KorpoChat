@@ -10,9 +10,9 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/messages")
 public class MessageController {
 
     private final SimpMessagingTemplate messagingTemplate;
@@ -23,22 +23,25 @@ public class MessageController {
         this.messageService = messageService;
     }
 
-    @GetMapping
-    public ResponseEntity<List<Message>> getChatHistory() {
-        return ResponseEntity.ok(messageService.getAllMessages());
+    // REST: Explicitly mapped path for fetching history
+    @GetMapping("/api/messages/{channelId}")
+    public ResponseEntity<List<Message>> getChatHistory(@PathVariable UUID channelId) {
+        return ResponseEntity.ok(messageService.getMessagesByChannelId(channelId));
     }
 
-    @PostMapping
+    // REST: Explicitly mapped path for HTTP fallback
+    @PostMapping("/api/messages")
     public ResponseEntity<Message> postMessage(@RequestBody Message message) {
         Message saved = messageService.saveMessage(message);
-        messagingTemplate.convertAndSend("/topic/public", saved);
+        messagingTemplate.convertAndSend("/topic/channel/" + saved.getChannelId(), saved);
         return ResponseEntity.ok(saved);
     }
 
+    // WEBSOCKET: Now accurately listens to /app/chat.sendMessage
     @MessageMapping("/chat.sendMessage")
     public void sendMessage(@Payload Message chatMessage) {
         Message processedMessage = messageService.saveMessage(chatMessage);
-        messagingTemplate.convertAndSend("/topic/public", processedMessage);
+        messagingTemplate.convertAndSend("/topic/channel/" + processedMessage.getChannelId(), processedMessage);
     }
 
     @MessageMapping("/chat.addUser")
@@ -46,6 +49,6 @@ public class MessageController {
         if (headerAccessor.getSessionAttributes() != null) {
             headerAccessor.getSessionAttributes().put("username", chatMessage.getSender());
         }
-        messagingTemplate.convertAndSend("/topic/public", chatMessage);
+        messagingTemplate.convertAndSend("/topic/channel/" + chatMessage.getChannelId(), chatMessage);
     }
 }

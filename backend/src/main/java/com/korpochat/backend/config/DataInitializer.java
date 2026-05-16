@@ -4,6 +4,8 @@ import com.korpochat.backend.entity.Role;
 import com.korpochat.backend.entity.Status;
 import com.korpochat.backend.entity.User;
 import com.korpochat.backend.repository.UserRepository;
+import com.korpochat.backend.service.ChannelService;
+import com.korpochat.backend.service.TagService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,8 +17,19 @@ import java.time.ZonedDateTime;
 public class DataInitializer {
 
     @Bean
-    CommandLineRunner initDatabase(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    CommandLineRunner initDatabase(UserRepository userRepository,
+                                   TagService tagService,
+                                   ChannelService channelService,
+                                   PasswordEncoder passwordEncoder) {
         return args -> {
+            channelService.createChannelIfMissing("#główny",
+                    "Główny kanał publiczny",
+                    "PUBLIC");
+
+            tagService.createTagIfMissing("admin");
+            tagService.createTagIfMissing("default");
+            tagService.createTagIfMissing("user");
+
             if (userRepository.findByUsername("admin").isEmpty()) {
                 User admin = new User();
                 admin.setUsername("admin");
@@ -24,21 +37,10 @@ public class DataInitializer {
                 admin.setRole(Role.ADMIN);
                 admin.setStatus(Status.OFFLINE);
                 admin.setCreatedAt(ZonedDateTime.now());
-                admin.setTags("System,Admin");
-                userRepository.save(admin);
+                admin.setTags("admin,default");
+                User savedAdmin = userRepository.save(admin);
+                channelService.syncUserChannels(savedAdmin);
                 System.out.println("LOG: Default ADMIN created (admin/admin)");
-            }
-
-            if (userRepository.findByUsername("user").isEmpty()) {
-                User user = new User();
-                user.setUsername("user");
-                user.setPasswordHash(passwordEncoder.encode("user"));
-                user.setRole(Role.USER);
-                user.setStatus(Status.OFFLINE);
-                user.setCreatedAt(ZonedDateTime.now());
-                user.setTags("Default,Staff");
-                userRepository.save(user);
-                System.out.println("LOG: Default USER created (user/user)");
             }
         };
     }

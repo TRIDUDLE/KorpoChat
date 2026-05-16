@@ -1,15 +1,40 @@
 /* =========================================
-   Utility Classes & Global Reset
+   Utility Classes & Global Variables
    ========================================= */
-/* * { margin: 0; padding: 0; box-sizing: border-box; } */
+:root {
+    /* Color Palette - Fresh Corporate Pastel */
+    --bg-main: #F8FAFC;         /* very light background */
+    --bg-sidebar: #F1F5F9;      /* pastel light gray for sidebar */
+    --bg-surface: #FFFFFF;      /* Czysta biel na karty i nagłówki */
+    
+    --primary: #6366F1;         /* Fiołkowy błękit (Indigo 500) - Główny akcent */
+    --primary-hover: #3b33d3;
+    
+    --msg-bubble: #E0E7FF;      /* Pastelowy dymek czatu */
+    
+    --text-dark: #334155;       /* Zmiękczony czarny do czytania (Slate 700) */
+    --text-muted: #94A3B8;      /* Szary do dat i mniejszych tekstów */
+    
+    --success: #10B981;         /* Pastelowy szmaragd - status online */
+    --danger: #F43F5E;          /* Pastelowa czerwień - usuwanie/wyloguj */
+    --danger-hover: rgb(140, 0, 30);    /* Hover dla przycisków niebezpiecznych */
+    --warning: #FBBF24;         /* Zgaszony żółty - edycja tagów */
+    --warning-hover: #D97706;    /* Hover dla przycisków ostrzegawczych */
+
+    /* Shapes */
+    --radius-pill: 9999px;      /* Pełne zaokrąglenie dla przycisków */
+    --radius-lg: 24px;          /* Duże zaokrąglenie kart i dymków */
+    --radius-md: 16px;
+    --radius-sm: 8px;
+}
 
 body {
     margin: 0;
     height: 100vh;
     overflow: hidden;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f8f9fa;
-    color: #333;
+    background-color: var(--bg-main);
+    color: var(--text-dark);
 }
 
 .hidden { display: none !important; }
@@ -25,19 +50,23 @@ body {
 }
 
 .auth-card {
-    background: white;
-    padding: 2.5rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    background: var(--bg-surface);
+    padding: 3rem;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 40px rgba(99, 102, 241, 0.08);
     width: 100%;
-    max-width: 400px;
+    max-width: 420px;
 }
 
-.auth-card h2 { margin-bottom: 1.5rem; text-align: center; }
+.auth-card h2 { 
+    margin-bottom: 2rem; 
+    text-align: center; 
+    color: var(--primary);
+    font-weight: 800;
+}
 
-/* Form Elements */
 .form-group {
-    margin-bottom: 1rem;
+    margin-bottom: 1.2rem;
     display: flex;
     flex-direction: column;
 }
@@ -46,37 +75,113 @@ body {
     margin-bottom: 0.5rem;
     font-weight: 600;
     font-size: 0.9rem;
+    color: var(--text-dark);
 }
 
-.form-group input {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+.form-group input, .form-group select {
+    padding: 12px 16px;
+    border: 2px solid #E2E8F0;
+    border-radius: var(--radius-md);
     font-size: 1rem;
+    color: var(--text-dark);
+    transition: all 0.3s ease;
+    background-color: var(--bg-main);
+}
+
+.form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--primary);
+    background-color: var(--bg-surface);
+}
+
+/* =========================================
+   Buttons
+   ========================================= */
+button {
+    font-family: inherit;
+    transition: all 0.2s ease;
 }
 
 .btn-primary {
     width: 100%;
-    padding: 12px;
-    background-color: #0d6efd;
+    padding: 14px;
+    background-color: var(--primary);
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: var(--radius-pill);
     font-weight: bold;
+    font-size: 1rem;
     cursor: pointer;
-    margin-top: 1rem;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
 }
 
-.btn-primary:hover { background-color: #0b5ed7; }
-
-.auth-switch {
-    margin-top: 1.5rem;
-    text-align: center;
-    font-size: 0.9rem;
+.btn-primary:hover { 
+    background-color: var(--primary-hover); 
 }
+
+.btn-secondary {
+    background-color: var(--text-muted);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    font-weight: bold;
+}
+.btn-secondary:hover { opacity: 0.9; }
+
+.btn-small {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.btn-danger { background-color: var(--danger); box-shadow: 0 2px 8px rgba(244, 63, 94, 0.2); }
+.btn-danger:hover { background-color: #E11D48; }
+
+.btn-edit { background-color: var(--primary); }
+.btn-edit:hover { background-color: var(--danger);color: white; }
+.btn-edit-tags { background-color: var(--warning); color: #78350F; }
+
+#create-tag-btn {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    font-weight: bold;
+    margin-left: 30px;
+}
+#create-tag-btn:hover { background-color:var(--primary-hover); color: white; }
+
+#back-to-chat-btn{
+    background-color: var(--warning);
+}
+#back-to-chat-btn:hover { background-color: var(--warning-hover)}
+
+#go-to-admin-btn{
+    background-color: var(--warning);
+}
+
+#go-to-admin-btn:hover{
+    background-color: var(--warning-hover)
+}
+
+/* Global specific buttons */
+#logout-btn {
+    background-color: var(--danger);
+    padding: 8px 20px;
+}
+#logout-btn:hover { background-color: var(--danger-hover); }
 
 /* =========================================
-   Main Chat Application (Grid Layout)
+   Main Chat Application
    ========================================= */
 .app-container {
     display: flex;
@@ -84,158 +189,269 @@ body {
 }
 
 .sidebar {
-    background-color: #2c3e50;
-    color: #ecf0f1;
+    background-color: var(--bg-sidebar);
+    color: var(--text-dark);
     display: flex;
     flex-direction: column;
-    width: 15%;
+    width: 20%;
+    min-width: 250px;
+    border-right: 1px solid #E2E8F0;
 }
 
 .sidebar-header {
-    padding: 20px;
-    border-bottom: 1px solid #1a252f;
+    padding: 25px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-direction: column;
+    gap: 15px;
 }
 
-.btn-small {
-    background-color: #e74c3c;
+.sidebar-header h2 { 
+    margin: 0; 
+    color: var(--primary); 
+    font-weight: 800;
+}
+
+.channel-list { 
+    list-style: none; 
+    padding: 10px 15px; 
+    overflow-y: auto; 
+    margin: 0;
+}
+
+.channel { 
+    padding: 12px 20px; 
+    cursor: pointer; 
+    transition: all 0.2s; 
+    border-radius: var(--radius-md);
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.channel:hover { 
+    background-color: #E2E8F0; 
+    color: var(--text-dark); 
+}
+
+.channel.active { 
+    background-color: var(--primary); 
     color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
 }
-
-.channel-list { list-style: none; padding: 10px 0; overflow-y: auto; }
-.channel { padding: 10px 20px; cursor: pointer; transition: background-color 0.2s; }
-.channel:hover, .channel.active { background-color: #34495e; }
 
 .chat-area {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
     height: 100%;
+    background-color: var(--bg-main);
 }
 
 .chat-header {
-    padding: 20px;
-    background-color: #fff;
-    border-bottom: 1px solid #dee2e6;
+    padding: 20px 30px;
+    background-color: var(--bg-surface);
+    border-bottom: 1px solid #E2E8F0;
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    z-index: 5;
 }
 
-/* Hamburger button global styles */
+.chat-header h3 {
+    margin: 0;
+    color: var(--text-dark);
+    font-weight: 700;
+}
+
 .hamburger-btn {
     background: none;
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: #2c3e50;
+    color: var(--primary);
     padding: 5px;
 }
 
-/* Class added by JS to hide the sidebar completely */
-.sidebar.closed {
-    display: none;
-}
+.sidebar.closed { display: none; }
 
 .chat-messages {
     flex-grow: 1;
-    overflow-y: auto; /* add scrollbar if too many msgs */
-    padding: 20px;
-    background-color: #f8f9fa;
+    overflow-y: auto; 
+    padding: 30px;
+    display: flex;
     flex-direction: column;
 }
+#admin-view .chat-area {
+    overflow-y: auto;
+    padding-right: 20px;
+}
 
+#admin-view .chat-area::-webkit-scrollbar {
+    width: 10px;
+}
+
+#admin-view .chat-area::-webkit-scrollbar-track {
+    background: #F1F5F9;
+    border-radius: 999px;
+}
+
+#admin-view .chat-area::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.25);
+    border-radius: 999px;
+}
+
+#admin-view .chat-area::-webkit-scrollbar-thumb:hover {
+    background: rgba(99, 102, 241, 0.35);
+}
+/* =========================================
+   CHAT MESSAGES SYSTEM
+   ========================================= */
+.message {
+    margin-bottom: 15px;
+    padding: 16px 20px;
+    background: var(--msg-bubble);
+    border-radius: 20px 20px 20px 5px;
+    color: var(--text-dark);
+    align-self: flex-start;
+    max-width: 75%;
+    box-shadow: 0 2px 5px rgba(99, 102, 241, 0.05);
+}
+
+.message.own {
+    align-self: flex-end;
+    background-color: var(--primary);
+    color: white;
+    border-radius: 20px 20px 5px 20px;
+}
+
+.message.own .sender {
+    color: #F3E8FF;
+}
+
+.message .text {
+    margin-top: 8px;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+.system-message {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.system-message .content {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    background: #E2E8F0;
+    padding: 6px 16px;
+    border-radius: var(--radius-pill);
+}
+
+/* Chat Input */
 .chat-input-wrapper {
     flex-shrink: 0;
-    padding: 15px;
-    background-color: #fff;
-    border-top: 1px solid #dee2e6;
+    padding: 20px 30px;
+    background-color: var(--bg-surface);
+    border-top: 1px solid #E2E8F0;
     display: flex;
+    gap: 15px;
 }
 
 #message-input {
     flex: 1;
-    padding: 12px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    flex-grow: 1; /* take all horizontal space */
-    
+    padding: 15px 25px;
+    border: 2px solid #E2E8F0;
+    border-radius: var(--radius-pill);
+    background-color: var(--bg-main);
 }
 
 .chat-input-wrapper button {
-    padding: 12px 24px;
-    background-color: #0d6efd;
+    padding: 12px 30px;
+    background-color: var(--primary);
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: var(--radius-pill);
     cursor: pointer;
-}
-/* =========================================\  
-    ADMIN PANEL STYLES
-    Specific Styles for Admin Dashboard
-   ========================================= */
-.admin-card {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    border: 1px solid #dee2e6;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
 }
 
+/* =========================================
+   ADMIN PANEL STYLES
+   ========================================= */
+.admin-card {
+    background: var(--bg-surface);
+    padding: 30px;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    border: none;
+}
+
+.admin-card h3 {
+    margin-top: 0;
+    color: var(--primary);
+    font-weight: 700;
+}
+select#new-role{
+    padding: 12px 16px; 
+    border: 2px solid #E2E8F0;
+    border-radius: var(--radius-md);
+    color: var(--text-dark);
+    background-color: var(--bg-main);
+}
+select#new-tags{
+    padding: 12px 16px; 
+    border: 2px solid #E2E8F0;
+    border-radius: var(--radius-md);
+    color: var(--text-dark);
+    background-color: var(--bg-main);
+}
 .admin-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     margin-top: 15px;
 }
 
 .admin-table th, .admin-table td {
-    padding: 12px 15px;
+    padding: 16px;
     text-align: left;
-    border-bottom: 1px solid #dee2e6;
+    border-bottom: 1px solid #F1F5F9;
+    vertical-align: middle;
 }
 
 .admin-table th {
-    background-color: #f1f3f5;
-    font-weight: 600;
+    background-color: var(--bg-main);
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
 }
-/* Add hover effect to table rows */
-.admin-table tbody tr:hover {
-    background-color: #e0e3e6; 
-    transition: background-color 0.2s ease; 
-}
+
+.admin-table th:first-child { border-top-left-radius: var(--radius-md); }
+.admin-table th:last-child { border-top-right-radius: var(--radius-md); }
+
 .admin-table tbody tr {
-    cursor: default; 
+    transition: background-color 0.2s;
+}
+
+.admin-table tbody tr:hover {
+    background-color: var(--bg-main); 
 }
 
 .badge {
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.badge-admin { background-color: #cff4fc; color: #055160; }
-.badge-user { background-color: #e2e3e5; color: #41464b; }
-
-.btn-secondary {
-    background-color: #6c757d;
-    color: white;
-    border: none;
-    padding: 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-}
-.btn-secondary:hover { background-color: #5c636a; }
-
-.btn-danger { background-color: #dc3545; }
-.btn-danger:hover { background-color: #c82333; }
-
-.btn-edit-tags { background-color: #e9d62f; }
+.badge-admin { background-color: #DBEAFE; color: #1E40AF; }
+.badge-user { background-color: #F1F5F9; color: #475569; }
