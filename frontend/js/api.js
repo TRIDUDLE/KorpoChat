@@ -103,6 +103,59 @@
                 throw error;
             }
         },
+        getUserChannels: async (username) => {
+            try {
+                const response = await fetch(`${api.BASE_URL}/users/${username}/channels`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Nie udało się pobrać listy kanałów.');
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('server connection error while fetching channels:', error);
+                throw error;
+            }
+        },
+        getTags: async () => {
+            try {
+                const response = await fetch(`${api.BASE_URL}/tags`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Nie udało się pobrać listy tagów.');
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('server connection error while fetching tags:', error);
+                throw error;
+            }
+        },
+        createTag: async (tagName) => {
+            try {
+                const response = await fetch(`${api.BASE_URL}/tags`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: tagName })
+                });
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || 'Nie udało się dodać taga.');
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('server connection error while creating tag:', error);
+                throw error;
+            }
+        },
         //handle deleting user
         deleteUser: async (username) => {
             try{
@@ -135,7 +188,7 @@
                 if (!response.ok) {
                     throw new Error('Nie udało się zaktualizować hasła! Sprawdź logi serwera.');
                 }
-                return await response.json();
+                return true;
 
             } catch (error) {
                 console.error("błąd serwera podczas aktualizacji hasła", error);
@@ -161,48 +214,33 @@
         },
 
         //handle fetching chat history
-        getMessages: async () => {
-            try {
-                const response = await fetch(`${api.BASE_URL}/messages`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to fetch chat history from server!');
-                }
-                return await response.json();
-            } catch(error){
-                console.error("server connection error:", error);
-                throw(error);
-            }
+        getMessages: async (channelId) => {
+        if (!channelId) throw new Error("Channel ID is required to fetch history");
+        
+        const response = await fetch(`/api/messages/${channelId}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch channel history');
+        }
+        return await response.json();
         },
         //handle sending new message to server
-        sendMessage: async (sender, text) => {
-            try {
-                const response = await fetch(`${api.BASE_URL}/messages`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        sender: sender,
-                        text: text
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to send message!');
-                }
-
-                return await response.json();
-
-            } catch (error) {
-                console.error("server connection error when sending message:", error);
-                throw error;
+        sendMessage: async (sender, text, channelId) => {
+            const payload = { 
+                sender, 
+                text, 
+                channelId 
+            };
+            const response = await fetch('/api/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                throw new Error('Failed to send message');
             }
+            return await response.json();
         },
         // handle logout
         logout: async (username) => {

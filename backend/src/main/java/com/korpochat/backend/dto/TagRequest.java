@@ -4,14 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
-/**
- * DTO for updating user tags.
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdateTagsRequest {
-    private List<String> tags;
+public class TagRequest {
+    private String name;
 }

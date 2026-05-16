@@ -16,10 +16,15 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TagService tagService;
+    private final ChannelService channelService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                       TagService tagService, ChannelService channelService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.tagService = tagService;
+        this.channelService = channelService;
     }
 
     public List<User> getAllUsers() {
@@ -27,19 +32,21 @@ public class UserService {
     }
 
     @Transactional
-    public User addUser(String username, String rawPassword, String roleStr, String tags) {
+    public User addUser(String username, String rawPassword, String roleStr, List<String> tags) {
         try {
             User user = new User();
             user.setUsername(username);
             user.setPasswordHash(passwordEncoder.encode(rawPassword));
 
-
             Role role = (roleStr != null) ? Role.valueOf(roleStr.toUpperCase()) : Role.USER;
             user.setRole(role);
-            user.setTags(tags);
+            user.setTags(tagService.validateAndFormatTags(tags));
             user.setStatus(Status.OFFLINE);
             user.setCreatedAt(ZonedDateTime.now());
-            return userRepository.save(user);
+
+            User savedUser = userRepository.save(user);
+            channelService.syncUserChannels(savedUser);
+            return savedUser;
         } catch (Exception e) {
             System.err.println("CRITICAL ERROR IN ADDUSER: " + e.getMessage());
             throw e;
@@ -56,11 +63,12 @@ public class UserService {
     }
 
     @Transactional
-    public void updateTags(String username, String tags) {
+    public void updateTags(String username, List<String> tags) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        user.setTags(tags);
-        userRepository.save(user);
+        user.setTags(tagService.validateAndFormatTags(tags));
+        User savedUser = userRepository.save(user);
+        channelService.syncUserChannels(savedUser);
     }
 
     @Transactional
@@ -68,5 +76,12 @@ public class UserService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         userRepository.delete(user);
+    }
+
+    public List<com.korpochat.backend.entity.Channel> getChannelsForUser(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        channelService.syncUserChannels(user);
+        return channelService.getChannelsForUser(user.getId());
     }
 }

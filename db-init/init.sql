@@ -27,6 +27,26 @@ CREATE TABLE channels (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 2.5 TAGS TABLE
+CREATE TABLE tags (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(50) UNIQUE NOT NULL,
+    display_name VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Default tags for the application
+INSERT INTO tags (name, display_name)
+VALUES
+    ('admin', 'Admin'),
+    ('default', 'Default'),
+    ('user', 'User');
+
+-- Default channels for the application
+INSERT INTO channels (id, name, description, channel_type)
+VALUES
+    ('00000000-0000-0000-0000-000000000001', '#główny', 'Główny kanał publiczny', 'PUBLIC');
+
 -- 3. CHANNEL_MEMBERS TABLE (Many-to-Many relationship between users and channels)
 CREATE TABLE channel_members (
     channel_id UUID NOT NULL REFERENCES channels(id) ON DELETE CASCADE,

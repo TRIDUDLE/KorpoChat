@@ -3,6 +3,7 @@ package com.korpochat.backend.controller;
 import com.korpochat.backend.dto.UserRequest;
 import com.korpochat.backend.dto.UpdateUserRequest;
 import com.korpochat.backend.dto.UpdateTagsRequest;
+import com.korpochat.backend.entity.Channel;
 import com.korpochat.backend.entity.User;
 import com.korpochat.backend.service.UserService;
 import org.springframework.http.ResponseEntity;
@@ -47,6 +48,11 @@ public class UserController {
     public ResponseEntity<Void> updateTags(@PathVariable String username, @RequestBody UpdateTagsRequest request) {
         userService.updateTags(username, request.getTags());
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{username}/channels")
+    public ResponseEntity<List<Channel>> getChannelsForUser(@PathVariable String username) {
+        return ResponseEntity.ok(userService.getChannelsForUser(username));
     }
 
     @DeleteMapping("/{username}")
