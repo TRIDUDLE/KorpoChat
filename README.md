@@ -111,7 +111,7 @@ docker-compose down
 
 Po uruchomieniu aplikacja będzie dostępna pod adresami:
 - Frontend: http://localhost
-- Backend API: http://localhost:8080
+- Backend API: http://localhost:8081
 - Database: localhost:5432
 
 ## Struktura projektu
