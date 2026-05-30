@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ChannelRepository extends JpaRepository<Channel, UUID> {
+    boolean existsByName(String name);
     Optional<Channel> findByName(String name);
     List<Channel> findAllByNameIn(Collection<String> names);
 
